@@ -72,5 +72,12 @@ label.check input{width:auto;margin:0}
 .item-top strong{color:var(--soft)}
 .item label a.btn{display:inline-block;margin-top:4px;text-decoration:none}
 textarea{resize:vertical}
+.item.pending{border-color:#d9a400;background:#fffaf0}
+.item>input,.item>textarea{margin-top:6px}
+.item>.btn{margin-top:8px;margin-inline-end:6px}
+.item-top small{color:#6b6252}
+h3.sub{margin:14px 0 6px;font-size:.95rem;color:var(--soft)}
+.btn.primary2{background:var(--purple);color:#fff}
+.btn.primary2:hover{background:#4a3c97}
 
 [hidden]{display:none !important}

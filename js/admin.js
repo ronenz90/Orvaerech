@@ -98,6 +98,64 @@
 
   /* ---------- writes / news items ---------- */
   function moveItem(arr, i, d) { var j = i + d; if (j < 0 || j >= arr.length) return; var x = arr.splice(i, 1)[0]; arr.splice(j, 0, x); setDirty(true); renderItems(); }
+  /* ---------- letters (live against the server) ---------- */
+  var letters = [];
+  function lmsg(t) { var m = $("l-msg"); m.textContent = t || ""; m.hidden = !t; }
+  function lcall(body) {
+    body.action = "letters_op"; body.password = pass;
+    return call(body).then(function (r) {
+      if (r && r.ok) { letters = r.items; $("l-auto").checked = !!r.auto; lmsg(""); renderLetters(); }
+      else lmsg(r && r.error === "bad_request" ? "השרת לא מכיר את הפעולה. יש לעדכן את backend.gs ולפרסם גרסה חדשה." : errText(r));
+      return r;
+    }).catch(function () { lmsg("אין חיבור לשרת."); });
+  }
+  function loadLetters() {
+    call({ action: "letters_admin", password: pass }).then(function (r) {
+      if (r && r.ok) { letters = r.items; $("l-auto").checked = !!r.auto; lmsg(""); renderLetters(); }
+      else lmsg(r && r.error === "bad_request" ? "ניהול המכתבים דורש עדכון של backend.gs בשרת (הדביקו את הקוד החדש ופרסמו גרסה חדשה)." : errText(r));
+    }).catch(function () { lmsg("אין חיבור לשרת."); });
+  }
+  function fmtDate(ts) { try { return new Date(ts).toLocaleString("he-IL", { dateStyle: "short", timeStyle: "short" }); } catch (e) { return ""; } }
+  function letterCard(x) {
+    var card = el("div", "item" + (x.ok ? "" : " pending"));
+    var top = el("div", "item-top");
+    top.appendChild(el("strong", null, x.ok ? "מפורסם" : "ממתין לאישור"));
+    top.appendChild(el("small", null, fmtDate(x.ts)));
+    top.appendChild(el("span", "spacer"));
+    top.appendChild(btn(x.ok ? "הסתרה" : "אישור ופרסום", "", function () { lcall({ op: x.ok ? "unapprove" : "approve", id: x.id }); }, false, x.ok ? "" : "primary2"));
+    top.appendChild(btn("✕", "מחיקה", function () { if (confirm("למחוק את המכתב?")) lcall({ op: "delete", id: x.id }); }, false, "danger"));
+    card.appendChild(top);
+    var n = el("input"); n.value = x.name || ""; n.placeholder = "שם";
+    var t = el("textarea"); t.rows = 4; t.value = x.text || "";
+    var save = btn("שמירת עריכה", "", function () { lcall({ op: "edit", id: x.id, name: n.value, text: t.value }); });
+    save.hidden = true;
+    n.oninput = t.oninput = function () { save.hidden = false; };
+    card.appendChild(n); card.appendChild(t); card.appendChild(save);
+    return card;
+  }
+  function renderLetters() {
+    var box = $("letters-box"); box.textContent = "";
+    var ordered = letters.slice().reverse();
+    var pend = ordered.filter(function (x) { return !x.ok; }), ok = ordered.filter(function (x) { return x.ok; });
+    if (!ordered.length) box.appendChild(el("p", "hint", "אין מכתבים עדיין."));
+    if (pend.length) box.appendChild(el("h3", "sub", "ממתינים לאישור (" + pend.length + ")"));
+    pend.forEach(function (x) { box.appendChild(letterCard(x)); });
+    if (ok.length) box.appendChild(el("h3", "sub", "מפורסמים (" + ok.length + ")"));
+    ok.forEach(function (x) { box.appendChild(letterCard(x)); });
+  }
+  $("l-auto").onchange = function () { lcall({ op: "setauto", auto: $("l-auto").checked }); };
+  $("btn-add-letter").onclick = function () {
+    var box = $("letters-box");
+    if (box.querySelector(".item.new")) return;
+    var card = el("div", "item new"), n = el("input"), t = el("textarea");
+    n.placeholder = "שם"; t.rows = 5; t.placeholder = "תוכן המכתב";
+    var ok = btn("הוספה", "", function () { if (!t.value.trim()) return; lcall({ op: "add", name: n.value, text: t.value }); }, false, "primary2");
+    var no = btn("ביטול", "", function () { card.remove(); });
+    var row = el("div", "item-top"); row.appendChild(el("strong", null, "מכתב חדש (יפורסם מיד)"));
+    card.appendChild(row); card.appendChild(n); card.appendChild(t); card.appendChild(ok); card.appendChild(no);
+    box.insertBefore(card, box.firstChild); n.focus();
+  };
+
   function field(label, node) { var l = el("label", null, label); l.appendChild(node); return l; }
   function itemCard(arr, i, kind) {
     var r = arr[i], card = el("div", "item");
@@ -132,7 +190,7 @@
     return card;
   }
   function renderItems() {
-    [["writes", "writes-items"], ["news", "news-items"]].forEach(function (p) {
+    [["news", "news-items"]].forEach(function (p) {
       var box = $(p[1]); box.textContent = "";
       var arr = data[p[0]].items;
       if (!arr.length) box.appendChild(el("p", "hint", "אין פריטים עדיין."));
@@ -143,7 +201,6 @@
     data[key].items.push(blank); setDirty(true); renderItems();
     var cards = $(selector).querySelectorAll(".item"), f = cards[cards.length - 1].querySelector("input,textarea"); if (f) f.focus();
   }
-  $("btn-add-write").onclick = function () { addItem("writes", { name: "", text: "" }, "writes-items"); };
   $("btn-add-news").onclick = function () { addItem("news", { title: "", source: "", url: "" }, "news-items"); };
 
   function btn(text, title, fn, disabled, cls) {
@@ -179,7 +236,6 @@
   /* ---------- JSON ---------- */
   function clean() {
     var out = JSON.parse(JSON.stringify(data));
-    out.writes.items = out.writes.items.filter(function (r) { return (r.name || "").trim() || (r.text || "").trim(); });
     out.news.items = out.news.items.filter(function (r) { return (r.title || "").trim() || (r.url || "").trim(); });
     out.books.forEach(function (b) { b.rows = b.rows.filter(function (r) { return r.name.trim() || r.label.trim() || r.url.trim(); }); });
     return out;
@@ -241,7 +297,7 @@
       data = x.d;
       window.SiteDefaults.fill(data);
       $("login").hidden = true; $("app").hidden = false;
-      bindGeneral(); renderBooks(); renderItems();
+      bindGeneral(); renderBooks(); renderItems(); loadLetters();
       if (x.fromServer) { setDirty(false); msg("", ""); }
       else { setDirty(true); msg("הנתונים נטענו מהקובץ המקורי. לחצו \"שמירה\" פעם אחת כדי להעביר אותם לשרת – מכאן והלאה העריכה לא תדרוש עדכון ריפוזיטורי.", ""); }
     });

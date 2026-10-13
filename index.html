@@ -18,7 +18,7 @@
 </head>
 <body>
 
-<div class="topbar"><div class="wrap"><button class="btn-info" id="btn-info" type="button">מידע על האתר</button></div></div>
+<div class="topbar"><div class="wrap"><button class="btn-info" id="btn-info" type="button">מידע על האתר</button><button class="btn-info" id="btn-writes" type="button"><span id="writes-title">כותבים לנעמה</span></button></div></div>
 
 <header class="band">
   <div class="wrap hd">
@@ -32,7 +32,6 @@
 <main class="paper">
   <div class="wrap">
     <nav class="banners" aria-label="תוכן נוסף">
-      <button class="banner" id="btn-writes" type="button"><strong id="writes-title">כותבים לנעמה</strong><span id="writes-sub"></span></button>
       <div id="news"></div>
       <button class="banner" id="btn-gallery" type="button"><strong id="gallery-title">תמונות של נעמה ז״ל</strong><span id="gallery-sub">גלריה</span></button>
       <button class="banner" id="btn-story" type="button"><strong id="story-title">סיפור נפילתה של נעמה ז״ל</strong><span id="story-sub"></span></button>
@@ -91,7 +90,20 @@
 <dialog class="modal" id="dlg-writes" aria-labelledby="writes-head">
   <div class="modal-box">
     <div class="modal-head"><h2 id="writes-head">כותבים לנעמה</h2><button class="close" type="button" data-close aria-label="סגירה">×</button></div>
-    <div class="modal-body pad"><div class="writes" id="writes-list"></div></div>
+    <div class="modal-body pad"><div class="writes">
+      <p class="w-msg" id="w-done" role="status" hidden></p>
+      <button class="btn-compose" id="btn-compose" type="button">✎ כתבו מכתב לנעמה</button>
+      <form class="compose" id="compose" hidden>
+        <label for="w-name">השם שלכם</label>
+        <input id="w-name" maxlength="80" autocomplete="name">
+        <label for="w-text">המכתב</label>
+        <textarea id="w-text" rows="7" maxlength="3000" required></textarea>
+        <input id="w-hp" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <p class="w-msg" id="w-msg" role="status" hidden></p>
+        <div class="compose-actions"><button class="btn-send" id="w-send" type="submit">שליחה</button><button class="btn-cancel" id="w-cancel" type="button">ביטול</button></div>
+      </form>
+      <div class="wlist" id="writes-list"></div>
+    </div></div>
   </div>
 </dialog>
 

@@ -8,6 +8,10 @@
 var FOLDER_ID = '16m87owSSRfjEpgxak8I286BvqwfnTH57';   // gallery images folder
 var DATA_FILE_NAME = 'naama-site-data.json';           // created in My Drive, holds the site content
 var MAX_FAILS = 8;                                     // wrong attempts before lockout
+var LETTERS_FILE_NAME = 'naama-letters.json';        // created in My Drive, holds the letters
+var MAX_PENDING = 300;                               // letters waiting for approval
+var MAX_LETTERS = 1500;                              // all letters
+var SUBMITS_PER_HOUR = 40;                           // public submissions per hour (all visitors)
 var LOCK_SECONDS = 900;                                // lockout duration (15 minutes)
 
 // ---- entry points ----
@@ -15,6 +19,7 @@ var LOCK_SECONDS = 900;                                // lockout duration (15 m
 function doGet(e) {
   const p = (e && e.parameter) || {};
   if (p.action === 'site') return out_({ ok: true, data: readSite_() });
+  if (p.action === 'letters') return out_({ ok: true, items: publicLetters_() });
   return gallery_(p);
 }
 
@@ -23,17 +28,28 @@ function doPost(e) {
   try { req = JSON.parse(e.postData.contents); }
   catch (err) { return out_({ ok: false, error: 'bad_request' }); }
 
+  if (req && req.action === 'submit') return submit_(req);
+
   const auth = checkPassword_(req.password);
   if (auth !== 'ok') return out_({ ok: false, error: auth });
 
   if (req.action === 'login') return out_({ ok: true });
+
+  if (req.action === 'letters_admin') {
+    const d = readLetters_();
+    return out_({ ok: true, auto: d.auto, items: d.items });
+  }
+  if (req.action === 'letters_op') {
+    try { return out_(lettersOp_(req)); }
+    catch (err) { return out_({ ok: false, error: 'invalid_data', detail: String(err) }); }
+  }
 
   if (req.action === 'save') {
     let clean;
     try { clean = sanitize_(req.data); }
     catch (err) { return out_({ ok: false, error: 'invalid_data', detail: String(err) }); }
     writeSite_(clean);
-    return out_({ ok: true, v: 2 });
+    return out_({ ok: true, v: 3 });
   }
   return out_({ ok: false, error: 'bad_request' });
 }
@@ -92,6 +108,97 @@ function writeSite_(data) {
     if (file) file.setContent(text);
     else props.setProperty('DATA_FILE_ID', DriveApp.createFile(DATA_FILE_NAME, text, 'text/plain').getId());
     CacheService.getScriptCache().remove('site');
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ---- letters (public submissions + admin moderation) ----
+
+function readLetters_() {
+  const id = PropertiesService.getScriptProperties().getProperty('LETTERS_FILE_ID');
+  if (!id) return { auto: false, items: [] };
+  try {
+    const d = JSON.parse(DriveApp.getFileById(id).getBlob().getDataAsString('UTF-8'));
+    return { auto: !!d.auto, items: Array.isArray(d.items) ? d.items : [] };
+  } catch (err) {
+    return { auto: false, items: [] };
+  }
+}
+
+function writeLetters_(d) {
+  const props = PropertiesService.getScriptProperties();
+  const text = JSON.stringify(d);
+  let file = null;
+  const id = props.getProperty('LETTERS_FILE_ID');
+  if (id) { try { file = DriveApp.getFileById(id); } catch (err) { file = null; } }
+  if (file) file.setContent(text);
+  else props.setProperty('LETTERS_FILE_ID', DriveApp.createFile(LETTERS_FILE_NAME, text, 'text/plain').getId());
+  CacheService.getScriptCache().remove('letters');
+}
+
+function publicLetters_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('letters');
+  if (hit) return JSON.parse(hit);
+  const list = readLetters_().items.filter(function (x) { return x.ok; })
+    .map(function (x) { return { name: x.name, text: x.text, ts: x.ts }; }).reverse();
+  const text = JSON.stringify(list);
+  try { if (text.length < 40000) cache.put('letters', text, 120); } catch (err) {}
+  return list;
+}
+
+function submit_(req) {
+  if (req.hp) return out_({ ok: true, status: 'pending' });
+  if (typeof req.text !== 'string' || (req.name != null && typeof req.name !== 'string')) return out_({ ok: false, error: 'bad_request' });
+  const name = String(req.name || '').trim(), text = req.text.trim();
+  if (!text) return out_({ ok: false, error: 'empty' });
+  if (text.length > 3000 || name.length > 80) return out_({ ok: false, error: 'too_long' });
+  const cache = CacheService.getScriptCache();
+  const n = Number(cache.get('subs') || 0);
+  if (n >= SUBMITS_PER_HOUR) return out_({ ok: false, error: 'busy' });
+  cache.put('subs', String(n + 1), 3600);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const d = readLetters_();
+    const pending = d.items.filter(function (x) { return !x.ok; }).length;
+    if (pending >= MAX_PENDING || d.items.length >= MAX_LETTERS) return out_({ ok: false, error: 'full' });
+    d.items.push({ id: Utilities.getUuid(), name: name, text: text, ts: new Date().toISOString(), ok: d.auto });
+    writeLetters_(d);
+    return out_({ ok: true, status: d.auto ? 'published' : 'pending' });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function lettersOp_(req) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const d = readLetters_();
+    const op = req.op;
+    if (op === 'setauto') { d.auto = !!req.auto; }
+    else if (op === 'add') {
+      if (d.items.length >= MAX_LETTERS) throw 'full';
+      const t = str_(req.text, 3000, 'text').trim();
+      if (!t) throw 'empty';
+      d.items.push({ id: Utilities.getUuid(), name: str_(req.name, 80, 'name').trim(), text: t, ts: new Date().toISOString(), ok: true });
+    } else {
+      const idx = d.items.findIndex(function (x) { return x.id === req.id; });
+      if (idx < 0) throw 'not found';
+      if (op === 'approve') d.items[idx].ok = true;
+      else if (op === 'unapprove') d.items[idx].ok = false;
+      else if (op === 'delete') d.items.splice(idx, 1);
+      else if (op === 'edit') {
+        const t2 = str_(req.text, 3000, 'text').trim();
+        if (!t2) throw 'empty';
+        d.items[idx].name = str_(req.name, 80, 'name').trim();
+        d.items[idx].text = t2;
+      } else throw 'bad op';
+    }
+    writeLetters_(d);
+    return { ok: true, auto: d.auto, items: d.items };
   } finally {
     lock.releaseLock();
   }

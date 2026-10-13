@@ -104,6 +104,54 @@
     return n;
   }
 
+  /* ---------- letters ---------- */
+  var wStatic = [], wRemote = [];
+  function renderLetters() {
+    var box = $("writes-list"); box.textContent = "";
+    var all = wRemote.concat(wStatic);
+    if (!all.length) box.appendChild(el("p", "empty", "עדיין אין מכתבים. אפשר להיות הראשונים."));
+    all.forEach(function (m) {
+      var c = el("article", "msg");
+      if (m.name) c.appendChild(el("h3", null, m.name));
+      if (m.text) c.appendChild(el("p", null, m.text));
+      box.appendChild(c);
+    });
+  }
+  function loadLetters() {
+    var api = window.SITE_API; if (!api) return;
+    fetch(api + "?action=letters&v=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.ok && Array.isArray(j.items)) { wRemote = j.items; renderLetters(); } })
+      .catch(function () {});
+  }
+  var compose = $("compose"), wMsg = $("w-msg");
+  function wsay(t, err) { wMsg.textContent = t || ""; wMsg.className = "w-msg" + (err ? " err" : ""); wMsg.hidden = !t; }
+  $("btn-writes").addEventListener("click", function () { open($("dlg-writes")); $("dlg-writes").querySelector(".modal-body").scrollTop = 0; loadLetters(); });
+  $("btn-compose").addEventListener("click", function () { compose.hidden = false; $("btn-compose").hidden = true; wsay(""); $("w-done").hidden = true; $("w-name").focus(); });
+  $("w-cancel").addEventListener("click", function () { compose.hidden = true; $("btn-compose").hidden = false; wsay(""); });
+  compose.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var text = $("w-text").value.trim();
+    if (!text) { wsay("יש לכתוב את תוכן המכתב.", true); return; }
+    var api = window.SITE_API; if (!api) { wsay("לא ניתן לשלוח כרגע.", true); return; }
+    var b = $("w-send"); b.disabled = true; b.textContent = "שולח…";
+    fetch(api, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "submit", name: $("w-name").value.trim(), text: text, hp: $("w-hp").value }) })
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (r && r.ok) {
+          $("w-text").value = ""; compose.hidden = true; $("btn-compose").hidden = false; wsay("");
+          var dn = $("w-done"); dn.textContent = r.status === "published" ? "תודה! המכתב פורסם." : "תודה! המכתב התקבל ויופיע לאחר אישור."; dn.hidden = false;
+          if (r.status === "published") loadLetters();
+        } else {
+          var m = { too_long: "המכתב ארוך מדי.", busy: "יותר מדי מכתבים נשלחו עכשיו. נסו שוב מאוחר יותר.", full: "אין כרגע אפשרות לקבל מכתבים נוספים." };
+          wsay(m[r && r.error] || "השליחה נכשלה. נסו שוב.", true);
+        }
+      })
+      .catch(function () { wsay("השליחה נכשלה. בדקו את החיבור ונסו שוב.", true); })
+      .then(function () { b.disabled = false; b.textContent = "שליחה"; });
+  });
+
   function makeBook(group, title, cnt, isOpen, fill) {
     var sec = el("section", "book" + (isOpen ? " open" : ""));
     var head = el("button", "head");
@@ -205,20 +253,11 @@
       });
     }));
 
-    /* writes: "כותבים לנעמה" */
+    /* writes: "כותבים לנעמה" - letters: fixed ones from the data + public ones from the server */
     $("writes-title").textContent = d.writes.title;
-    $("writes-sub").textContent = d.writes.subtitle || "";
     $("writes-head").textContent = d.writes.title;
-    var wbox = $("writes-list"); wbox.textContent = "";
-    var msgs = (d.writes.items || []).filter(function (x) { return x.name || x.text; });
-    if (!msgs.length) wbox.appendChild(el("p", "empty", "עדיין אין דברים כתובים."));
-    msgs.forEach(function (m) {
-      var c = el("article", "msg");
-      if (m.name) c.appendChild(el("h3", null, m.name));
-      if (m.text) c.appendChild(el("p", null, m.text));
-      wbox.appendChild(c);
-    });
-    $("btn-writes").onclick = function () { open($("dlg-writes")); $("dlg-writes").querySelector(".modal-body").scrollTop = 0; };
+    wStatic = (d.writes.items || []).filter(function (x) { return x.name || x.text; });
+    renderLetters();
 
     /* video */
     var vid = SiteDefaults.ytId(d.video.url), vbox = $("video");

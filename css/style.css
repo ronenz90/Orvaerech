@@ -23,7 +23,7 @@ img{max-width:100%}
 
 /* ---------- top bar ---------- */
 .topbar{background:var(--purple-dark)}
-.topbar .wrap{display:flex;justify-content:flex-start;padding:8px 14px}
+.topbar .wrap{display:flex;justify-content:space-between;gap:10px;padding:8px 14px}
 .btn-info{
   background:transparent;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:999px;
   padding:5px 16px;font-size:.9rem;font-weight:400;transition:background .2s,border-color .2s;
@@ -97,6 +97,21 @@ a.li:hover,a.li:focus-visible{background:rgba(57,45,122,.1);outline:none;border-
 
 /* writes dialog */
 .writes{max-width:640px;margin:0 auto;display:grid;gap:14px}
+.wlist{display:grid;gap:14px}
+.btn-compose,.btn-send{background:var(--purple);color:#fff;border:0;border-radius:10px;padding:12px 16px;font-size:1.05rem;font-weight:700}
+.btn-compose:hover,.btn-send:hover{background:#4a3c97}
+.btn-send:disabled{opacity:.6;cursor:wait}
+.btn-cancel{background:transparent;color:var(--purple);border:1px solid var(--purple);border-radius:10px;padding:11px 16px}
+.compose{display:grid;gap:6px;background:#f6ebd3;border:1px solid rgba(57,45,122,.22);border-radius:12px;padding:14px 16px}
+.compose[hidden]{display:none}
+.compose label{font-weight:700;color:var(--purple);margin-top:4px}
+.compose input,.compose textarea{width:100%;font:inherit;color:var(--ink);background:#fff;border:1px solid #c9bfa8;border-radius:8px;padding:9px 11px}
+.compose textarea{resize:vertical;min-height:140px;line-height:1.7}
+.compose input:focus,.compose textarea:focus{outline:2px solid #b9aef0;border-color:var(--purple)}
+.compose .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.compose-actions{display:flex;gap:10px;margin-top:6px}
+.w-msg{margin:4px 0 0;padding:8px 12px;border-radius:8px;background:#eaf7ee;color:#0d3b1c}
+.w-msg.err{background:#fdeeed;color:#7a1610}
 .msg{background:#f6ebd3;border:1px solid rgba(57,45,122,.22);border-radius:12px;padding:14px 16px}
 .msg h3{margin:0 0 6px;color:var(--purple);font-size:1.1rem;font-weight:800}
 .msg p{margin:0;font-size:1.04rem;line-height:1.85;white-space:pre-line;overflow-wrap:anywhere}

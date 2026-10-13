@@ -80,13 +80,13 @@
   </section>
 
   <section class="card" id="sec-writes">
-    <h2>כותבים לנעמה</h2>
-    <div class="grid2">
-      <label>כותרת הבאנר<input data-bind="writes.title"></label>
-      <label>כותרת משנה<input data-bind="writes.subtitle"></label>
-    </div>
-    <div id="writes-items" class="items"></div>
-    <p><button class="btn" id="btn-add-write" type="button">+ הוספת הודעה</button></p>
+    <h2>כותבים לנעמה – מכתבים</h2>
+    <label>שם הכפתור בראש הדף<input data-bind="writes.title"></label>
+    <p class="hint">המכתבים מנוהלים כאן מיד מול השרת, בלי קשר ללחיצה על "שמירה" למעלה.</p>
+    <label class="check"><input id="l-auto" type="checkbox"> פרסום אוטומטי של מכתבים חדשים (בלי אישור שלי)</label>
+    <p class="note err" id="l-msg" hidden role="alert"></p>
+    <div id="letters-box"></div>
+    <p><button class="btn" id="btn-add-letter" type="button">+ הוספת מכתב</button></p>
   </section>
 
   <section class="card" id="sec-news">
