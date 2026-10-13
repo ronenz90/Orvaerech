@@ -131,10 +131,9 @@
 
     /* books: one banner per book, unfolds into the parasha list */
     var box = $("books");
-    var openIdx = 0;
+    var openIdx = -1;
     var prev = box.querySelector(".book.open");
     if (prev) openIdx = Number(prev.getAttribute("data-i"));
-    else if (box.children.length) openIdx = -1;
     box.textContent = "";
     d.books.forEach(function (b, i) {
       var sec = el("section", "book" + (i === openIdx ? " open" : ""));
