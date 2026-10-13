@@ -12,14 +12,30 @@
 </head>
 <body>
 
+<!-- התחברות -->
+<section id="login" class="login">
+  <form id="login-form" class="card" autocomplete="on">
+    <h1>ניהול האתר</h1>
+    <p class="hint">אור וערך לנעמה</p>
+    <label>סיסמת ניהול
+      <input id="pw" type="password" autocomplete="current-password" required autofocus>
+    </label>
+    <label class="check"><input id="remember" type="checkbox"> זכור אותי במכשיר הזה</label>
+    <p class="note err" id="login-msg" hidden role="alert"></p>
+    <button class="btn primary solid" id="login-btn" type="submit">כניסה</button>
+  </form>
+</section>
+
+<!-- אפליקציה -->
+<div id="app" hidden>
 <header class="bar">
   <div class="bar-in">
     <h1>ניהול האתר</h1>
     <span class="chip" id="chip">נטען…</span>
     <span class="spacer"></span>
-    <button class="btn ghost" id="btn-settings" type="button">הגדרות GitHub</button>
-    <button class="btn ghost" id="btn-download" type="button">הורדת site.json</button>
-    <button class="btn primary" id="btn-save" type="button">שמירה באתר</button>
+    <button class="btn ghost" id="btn-logout" type="button">יציאה</button>
+    <button class="btn ghost" id="btn-download" type="button">הורדת גיבוי</button>
+    <button class="btn primary" id="btn-save" type="button">שמירה</button>
   </div>
 </header>
 
@@ -33,9 +49,9 @@
         <legend>באנר גלריית תמונות</legend>
         <label>כותרת<input data-bind="gallery.title"></label>
         <label>כותרת משנה<input data-bind="gallery.subtitle"></label>
-        <label>קישור לתיקיית Google Drive <small>(חייבת להיות משותפת – "כל מי שיש לו את הקישור")</small>
+        <label>קישור לתיקיית Google Drive <small>(לשימוש כשאין גלריה נגללת; חייבת להיות משותפת)</small>
           <input data-bind="gallery.url" data-url dir="ltr" placeholder="https://drive.google.com/drive/folders/…"></label>
-        <label>קישור לסקריפט הגלריה (Apps Script) <small>(מציג גלריה נגללת כולל תיקיות משנה. ריק = תצוגת Drive רגילה. הקובץ gallery-feed.gs מצורף)</small>
+        <label>כתובת גלריה חלופית <small>(ריק = הגלריה הנגללת מהשרת של האתר, כולל תיקיות משנה)</small>
           <input data-bind="gallery.feed" data-feed dir="ltr" placeholder="https://script.google.com/macros/s/…/exec"></label>
       </fieldset>
       <fieldset>
@@ -61,38 +77,10 @@
   <div id="books"></div>
   <p><button class="btn" id="btn-add-book" type="button">+ הוספת ספר / קבוצה</button></p>
 </main>
-
-<dialog id="dlg-settings" class="dlg">
-  <form method="dialog" class="dlg-box" id="settings-form">
-    <h2>חיבור ל-GitHub</h2>
-    <p class="hint">כדי ששמירה תעדכן את האתר החי, צריך מפתח גישה (Personal Access Token). האתר כולו סטטי, לכן המפתח נשמר <b>רק בדפדפן הזה</b> ולא נשלח לאף מקום מלבד GitHub.</p>
-    <div class="grid2">
-      <label>שם משתמש / ארגון<input id="gh-owner" dir="ltr" autocomplete="off"></label>
-      <label>שם הריפוזיטורי<input id="gh-repo" dir="ltr" autocomplete="off"></label>
-      <label>ענף (Branch)<input id="gh-branch" dir="ltr" value="main"></label>
-      <label>נתיב הקובץ<input id="gh-path" dir="ltr" value="data/site.json"></label>
-    </div>
-    <label>Token <small>(Fine-grained, הרשאה Contents: Read and write לריפוזיטורי הזה בלבד)</small>
-      <input id="gh-token" type="password" dir="ltr" autocomplete="off" placeholder="github_pat_…"></label>
-    <details class="hint"><summary>איך יוצרים Token?</summary>
-      <ol>
-        <li>GitHub ← Settings ← Developer settings ← Personal access tokens ← <b>Fine-grained tokens</b> ← Generate new token.</li>
-        <li>Repository access: Only select repositories ← בוחרים את ריפוזיטורי האתר.</li>
-        <li>Permissions ← Repository permissions ← <b>Contents: Read and write</b>.</li>
-        <li>מעתיקים את ה-Token ומדביקים כאן.</li>
-      </ol>
-    </details>
-    <p class="note" id="gh-msg" hidden></p>
-    <div class="dlg-actions">
-      <button class="btn ghost" type="button" id="gh-test">בדיקת חיבור</button>
-      <span class="spacer"></span>
-      <button class="btn ghost" type="button" id="gh-forget">מחיקת Token מהדפדפן</button>
-      <button class="btn primary" value="ok" id="gh-ok">שמירת הגדרות</button>
-    </div>
-  </form>
-</dialog>
+</div>
 
 <script src="js/drive.js"></script>
+<script src="js/config.js"></script>
 <script src="js/admin.js"></script>
 </body>
 </html>

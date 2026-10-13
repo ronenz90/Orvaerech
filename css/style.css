@@ -142,3 +142,5 @@ dialog.light img.loading{opacity:.35}
   background:rgba(0,0,0,.35);color:#fff;font-size:2.2rem;line-height:1}
 .lprev{right:6px}.lnext{left:6px}
 .lnav:hover,.lbtn:hover{background:rgba(255,255,255,.2)}
+
+[hidden]{display:none !important}

@@ -34,13 +34,14 @@
   function openGallery(g) {
     open($("dlg-gallery"));
     if (g.url) { var e = D.embed(g.url); if (e) $("gallery-ext").href = e.open; }
-    if (!g.feed) { showEmbed(g); return; }
+    var feed = g.feed || window.SITE_API;
+    if (!feed) { showEmbed(g); return; }
     var view = $("gallery-view");
     $("gallery-frame").hidden = true; view.hidden = false;
     if (galLoaded) return;
     view.textContent = "";
     view.appendChild(el("p", "gal-msg", "טוען תמונות…"));
-    fetch(g.feed + (g.feed.indexOf("?") > -1 ? "&" : "?") + "v=" + Math.floor(Date.now() / 60000))
+    fetch(feed + (feed.indexOf("?") > -1 ? "&" : "?") + "v=" + Math.floor(Date.now() / 60000))
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (data) { buildGallery(view, data); galLoaded = true; })
       .catch(function () {
@@ -123,7 +124,7 @@
 
     /* story: Drive link if set, otherwise built-in text */
     $("btn-story").onclick = function () {
-      if (d.story.url) { openViewer(d.story.title, d.story.url); return; }
+      if (/^https?:\/\//i.test(d.story.url || "")) { openViewer(d.story.title, d.story.url); return; }
       open($("dlg-story"));
       $("dlg-story").querySelector(".modal-body").scrollTop = 0;
     };
@@ -137,7 +138,7 @@
         var row = el("div", "row");
         row.appendChild(el("span", "name", r.name + (r.dash && r.label ? " -" : "")));
         var lbl = el("span", "lbl");
-        if (r.label && r.url) {
+        if (r.label && /^https?:\/\//i.test(r.url || "")) {
           var a = el("a", null, r.label);
           a.href = r.url; a.rel = "noopener";
           a.addEventListener("click", function (ev) {
@@ -155,16 +156,42 @@
     /* footer */
     $("foot-1").textContent = d.footer.line1;
     $("foot-2").textContent = d.footer.line2;
-    $("loading").remove();
+    var ld = $("loading"); if (ld) ld.remove();
   }
 
   $("btn-info").addEventListener("click", function () { open($("dlg-info")); });
 
-  fetch("data/site.json?v=" + Date.now(), { cache: "no-store" })
-    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(render)
-    .catch(function (e) {
-      $("loading").textContent = "לא ניתן לטעון את תוכן האתר. (אם פתחתם את הקובץ ישירות מהמחשב – יש להריץ אותו דרך שרת, או לפרוס ל-GitHub Pages.)";
+  /* ---------- data loading: server (Apps Script) first, repo file as fallback ---------- */
+  var CKEY = "naama_site_v1", lastJson = null, failed = false;
+  function show(d) {
+    var s = JSON.stringify(d);
+    if (s === lastJson) return;
+    lastJson = s; render(d);
+  }
+  function repoData() {
+    return fetch("data/site.json?v=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+  function apiData() {
+    var api = window.SITE_API;
+    if (!api) return Promise.reject(new Error("no api"));
+    return fetch(api + (api.indexOf("?") > -1 ? "&" : "?") + "action=site&v=" + Math.floor(Date.now() / 20000))
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.ok && j.data && j.data.books) return j.data; throw new Error("empty"); });
+  }
+  function fromRepo() {
+    if (lastJson) return;
+    repoData().then(show).catch(function (e) {
+      if (lastJson) return;
+      $("loading").textContent = "לא ניתן לטעון את תוכן האתר. נסו לרענן את הדף.";
       if (window.console) console.error(e);
     });
+  }
+  try { var c = JSON.parse(localStorage.getItem(CKEY) || "null"); if (c && c.books) show(c); } catch (e) {}
+  var slow = setTimeout(fromRepo, 5000);
+  apiData().then(function (d) {
+    clearTimeout(slow);
+    try { localStorage.setItem(CKEY, JSON.stringify(d)); } catch (e) {}
+    show(d);
+  }).catch(function () { clearTimeout(slow); fromRepo(); });
 })();

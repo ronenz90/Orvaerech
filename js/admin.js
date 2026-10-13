@@ -2,7 +2,7 @@
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var D = window.DriveUtil;
-  var data = null, dirty = false, LS = "naama_admin_gh";
+  var data = null, dirty = false, PWKEY = "naama_admin_pw", pass = "";
 
   /* ---------- helpers ---------- */
   function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
@@ -137,88 +137,93 @@
   $("btn-download").onclick = function () {
     var a = el("a"); a.href = URL.createObjectURL(new Blob([toJSON()], { type: "application/json" }));
     a.download = "site.json"; document.body.appendChild(a); a.click(); a.remove();
-    msg("הקובץ ירד. כדי לעדכן את האתר ידנית – מחליפים אותו ב-data/site.json בריפוזיטורי.", "ok");
+    msg('הגיבוי ירד למכשיר. האתר עצמו מתעדכן רק בלחיצה על "שמירה".', "ok");
   };
 
-  /* ---------- GitHub ---------- */
-  function guess() {
-    var h = location.hostname, o = "", r = "";
-    if (/\.github\.io$/.test(h)) { o = h.split(".")[0]; r = location.pathname.split("/")[1] || (o + ".github.io"); }
-    return { owner: o, repo: r, branch: "main", path: "data/site.json", token: "" };
+  /* ---------- server ---------- */
+  var API = window.SITE_API;
+  function call(body) {
+    return fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); });
   }
-  function loadCfg() {
-    var c = guess();
-    try { var s = JSON.parse(localStorage.getItem(LS) || "null"); if (s) Object.keys(s).forEach(function (k) { if (s[k]) c[k] = s[k]; }); } catch (e) {}
-    return c;
-  }
-  function saveCfg(c) { try { localStorage.setItem(LS, JSON.stringify(c)); } catch (e) {} }
-  function formCfg() {
-    return { owner: $("gh-owner").value.trim(), repo: $("gh-repo").value.trim(), branch: $("gh-branch").value.trim() || "main",
-             path: $("gh-path").value.trim().replace(/^\/+/, "") || "data/site.json", token: $("gh-token").value.trim() };
-  }
-  function fillForm(c) { $("gh-owner").value = c.owner; $("gh-repo").value = c.repo; $("gh-branch").value = c.branch; $("gh-path").value = c.path; $("gh-token").value = c.token; }
-  function headers(c) { return { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }; }
-  function api(c) { return "https://api.github.com/repos/" + encodeURIComponent(c.owner) + "/" + encodeURIComponent(c.repo) + "/contents/" + c.path.split("/").map(encodeURIComponent).join("/"); }
-  function b64(s) { return btoa(unescape(encodeURIComponent(s))); }
-  function explain(status) {
-    if (status === 401) return "ה-Token לא תקין או שפג תוקפו.";
-    if (status === 403) return "אין הרשאה. ודאו שה-Token כולל Contents: Read and write לריפוזיטורי הזה.";
-    if (status === 404) return "הריפוזיטורי או הענף לא נמצאו (או שאין ל-Token גישה אליהם). בדקו שם משתמש, שם ריפוזיטורי וענף.";
-    if (status === 409 || status === 422) return "הקובץ השתנה בינתיים בצד השרת. טענו מחדש את הדף ונסו שוב.";
-    return "שגיאה " + status;
-  }
-  function needCfg(c) { return !(c.owner && c.repo && c.token); }
+  var ERR = {
+    bad_password: "הסיסמה שגויה.",
+    locked: "יותר מדי ניסיונות שגויים. הכניסה נחסמה זמנית – נסו שוב בעוד כ-15 דקות.",
+    not_configured: "לא הוגדרה סיסמה בשרת. יש להוסיף Script Property בשם ADMIN_PASSWORD ב-Apps Script ולפרסם גרסה חדשה.",
+    bad_request: "הבקשה לא הובנה בשרת. ודאו שב-Apps Script מודבק הקוד העדכני (backend.gs) ופורסמה גרסה חדשה.",
+    invalid_data: "השרת דחה את הנתונים"
+  };
+  function errText(r) { return (ERR[r && r.error] || "שגיאה בשרת") + (r && r.detail ? " (" + r.detail + ")" : ""); }
 
-  function openSettings() { fillForm(loadCfg()); msg("", "", "gh-msg"); $("dlg-settings").showModal(); }
-  $("btn-settings").onclick = openSettings;
-  $("gh-ok").onclick = function () { saveCfg(formCfg()); };
-  $("gh-forget").onclick = function () { try { localStorage.removeItem(LS); } catch (e) {} fillForm(guess()); msg("ה-Token נמחק מהדפדפן.", "ok", "gh-msg"); };
-  $("gh-test").onclick = function () {
-    var c = formCfg();
-    if (needCfg(c)) { msg("יש למלא שם משתמש, ריפוזיטורי ו-Token.", "err", "gh-msg"); return; }
-    msg("בודק…", "", "gh-msg");
-    fetch(api(c) + "?ref=" + encodeURIComponent(c.branch), { headers: headers(c) }).then(function (r) {
-      if (r.ok) msg("החיבור תקין – הקובץ נמצא בריפוזיטורי.", "ok", "gh-msg");
-      else if (r.status === 404) msg("החיבור עובד, אבל הקובץ " + c.path + " עדיין לא קיים בריפוזיטורי. הוא ייווצר בשמירה הראשונה (אם הריפוזיטורי והענף קיימים).", "", "gh-msg");
-      else msg(explain(r.status), "err", "gh-msg");
-    }).catch(function () { msg("אין חיבור לרשת.", "err", "gh-msg"); });
+  function stored() { try { return localStorage.getItem(PWKEY) || sessionStorage.getItem(PWKEY) || ""; } catch (e) { return ""; } }
+  function isRemembered() { try { return !!localStorage.getItem(PWKEY); } catch (e) { return false; } }
+  function store(pw, remember) {
+    try { localStorage.removeItem(PWKEY); sessionStorage.removeItem(PWKEY); (remember ? localStorage : sessionStorage).setItem(PWKEY, pw); } catch (e) {}
+  }
+  function forget() { try { localStorage.removeItem(PWKEY); sessionStorage.removeItem(PWKEY); } catch (e) {} }
+
+  function loginMsg(t) { var m = $("login-msg"); m.textContent = t || ""; m.hidden = !t; }
+  function showLogin(t) { pass = ""; $("app").hidden = true; $("login").hidden = false; loginMsg(t); $("pw").focus(); }
+
+  function loadData() {
+    return fetch(API + "?action=site&v=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.ok && j.data && j.data.books) return { d: j.data, fromServer: true };
+        throw new Error("empty");
+      })
+      .catch(function () {
+        return fetch("data/site.json?v=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); })
+          .then(function (d) { return { d: d, fromServer: false }; });
+      });
+  }
+  function enter() {
+    return loadData().then(function (x) {
+      data = x.d;
+      ["gallery", "story", "info", "footer"].forEach(function (k) { if (!data[k]) data[k] = {}; });
+      $("login").hidden = true; $("app").hidden = false;
+      bindGeneral(); renderBooks();
+      if (x.fromServer) { setDirty(false); msg("", ""); }
+      else { setDirty(true); msg("הנתונים נטענו מהקובץ המקורי. לחצו \"שמירה\" פעם אחת כדי להעביר אותם לשרת – מכאן והלאה העריכה לא תדרוש עדכון ריפוזיטורי.", ""); }
+    });
+  }
+
+  if (!API) { loginMsg("לא הוגדר SITE_API בקובץ js/config.js."); $("login-btn").disabled = true; }
+
+  function tryLogin(pw, remember, silent) {
+    $("login-btn").disabled = true; $("login-btn").textContent = "בודק…";
+    return call({ action: "login", password: pw })
+      .then(function (r) {
+        if (r && r.ok) { pass = pw; store(pw, remember); return enter(); }
+        forget(); showLogin(silent ? "" : errText(r));
+      })
+      .catch(function () { showLogin("אין חיבור לשרת. בדקו את הרשת ואת כתובת SITE_API."); })
+      .then(function () { $("login-btn").disabled = false; $("login-btn").textContent = "כניסה"; });
+  }
+  $("login-form").onsubmit = function (e) { e.preventDefault(); loginMsg(""); tryLogin($("pw").value, $("remember").checked, false); };
+  $("btn-logout").onclick = function () {
+    if (dirty && !confirm("יש שינויים שלא נשמרו. לצאת בכל זאת?")) return;
+    dirty = false; forget(); $("pw").value = ""; showLogin("");
   };
 
   $("btn-save").onclick = function () {
     var bad = badUrls();
     if (bad.length && !confirm("יש " + bad.length + " קישורים לא תקינים. לשמור בכל זאת?")) return;
-    var c = loadCfg();
-    if (needCfg(c)) { openSettings(); msg("כדי לשמור באתר יש להגדיר חיבור ל-GitHub (או להוריד את site.json).", "", "msg"); return; }
     var b = $("btn-save"); b.disabled = true; b.textContent = "שומר…";
-    var done = function () { b.disabled = false; b.textContent = "שמירה באתר"; };
-    fetch(api(c) + "?ref=" + encodeURIComponent(c.branch), { headers: headers(c), cache: "no-store" })
+    var done = function () { b.disabled = false; b.textContent = "שמירה"; };
+    call({ action: "save", password: pass, data: clean() })
       .then(function (r) {
-        if (r.ok) return r.json().then(function (j) { return j.sha; });
-        if (r.status === 404) return undefined;
-        throw { status: r.status };
+        if (r && r.ok) { setDirty(false); msg("נשמר. האתר מתעדכן מיד אצל מי שפותח אותו מעכשיו (מי שכבר פתוח אצלו יראה בטעינה הבאה).", "ok"); }
+        else if (r && (r.error === "bad_password" || r.error === "locked")) { dirty = false; forget(); showLogin(errText(r)); }
+        else msg(errText(r), "err");
       })
-      .then(function (sha) {
-        var body = { message: "עדכון קישורים מדף הניהול", content: b64(toJSON()), branch: c.branch };
-        if (sha) body.sha = sha;
-        return fetch(api(c), { method: "PUT", headers: Object.assign({ "Content-Type": "application/json" }, headers(c)), body: JSON.stringify(body) });
-      })
-      .then(function (r) {
-        if (!r.ok) throw { status: r.status };
-        setDirty(false);
-        msg("נשמר. האתר יתעדכן תוך דקה-שתיים (GitHub Pages בונה מחדש). אם לא רואים שינוי – רענון קשיח (Ctrl+F5).", "ok");
-        done();
-      })
-      .catch(function (e) { msg(e && e.status ? explain(e.status) : "השמירה נכשלה (אין חיבור לרשת?).", "err"); done(); });
+      .catch(function () { msg("השמירה נכשלה – אין חיבור לשרת. השינויים עדיין כאן, נסו שוב.", "err"); })
+      .then(done);
   };
 
   window.addEventListener("beforeunload", function (e) { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
 
-  /* ---------- load ---------- */
-  fetch("data/site.json?v=" + Date.now(), { cache: "no-store" })
-    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (d) { data = d; bindGeneral(); renderBooks(); setDirty(false); })
-    .catch(function () {
-      $("chip").textContent = "שגיאת טעינה";
-      msg("לא ניתן לטעון את data/site.json. ודאו שהדף נפתח דרך האתר (GitHub Pages) ולא ישירות מהמחשב.", "err");
-    });
+  /* auto-login if a password was remembered on this device / tab */
+  var saved = stored();
+  if (API && saved) tryLogin(saved, isRemembered(), true);
 })();
