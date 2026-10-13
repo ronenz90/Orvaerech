@@ -65,4 +65,12 @@ label.check input{width:auto;margin:0}
 .btn.solid:hover{background:#4a3c97}
 .btn.solid:disabled{opacity:.6;cursor:wait}
 
+/* items (writes / news) */
+.items{display:grid;gap:10px;margin:10px 0}
+.item{border:1px solid var(--line);border-radius:10px;padding:8px 12px 12px;background:#fcfaf5}
+.item-top{display:flex;gap:6px;align-items:center}
+.item-top strong{color:var(--soft)}
+.item label a.btn{display:inline-block;margin-top:4px;text-decoration:none}
+textarea{resize:vertical}
+
 [hidden]{display:none !important}

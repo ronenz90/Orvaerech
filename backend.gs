@@ -1,25 +1,16 @@
-/**
- * שרת קטן לאתר "אור וערך לנעמה" – Google Apps Script.
- * עושה שלושה דברים:
- *  1. שומר את תוכן האתר (שורות, קישורים, טקסטים) בקובץ ב-Drive שלכם, כך ששינוי לא דורש לגעת בריפוזיטורי.
- *  2. מאפשר שמירה רק למי שיודע את סיסמת הניהול. הסיסמה נשמרת כ"סוד" ב-Script Properties ואינה מופיעה בקוד.
- *  3. מזין את הגלריה: רשימת כל התמונות בתיקייה ובכל תיקיות המשנה.
- *
- * התקנה / עדכון:
- *  א. בפרויקט ה-Apps Script הקיים: מוחקים את הקוד הישן ומדביקים את כל הקובץ הזה ← שמירה.
- *  ב. הגדרת הסיסמה (הסוד): סמל גלגל השיניים "Project Settings" ← למטה "Script Properties" ← "Add script property"
- *     Property: ADMIN_PASSWORD   Value: הסיסמה שבחרתם   ← Save.
- *  ג. Deploy ← Manage deployments ← סמל העיפרון ← Version: "New version" ← Deploy.
- *     (חשוב: בלי "New version" הקוד הישן ממשיך לרוץ. כתובת ה-/exec נשארת אותה כתובת.)
- *  ד. בפעם הראשונה ייתכן שיבקשו אישור הרשאות – מאשרים.
- */
+// Backend for the "Or VaErech LeNaama" site (Google Apps Script).
+// 1. Stores the site content (rows, links, texts) in a Drive file.
+// 2. Saving requires the admin password, kept as the Script Property ADMIN_PASSWORD (not in this code).
+// 3. Serves the gallery: all images in FOLDER_ID and all its sub-folders.
+// After pasting: Project Settings -> Script properties -> add ADMIN_PASSWORD.
+// Then: Deploy -> Manage deployments -> pencil -> Version: New version -> Deploy.
 
-const FOLDER_ID = '16m87owSSRfjEpgxak8I286BvqwfnTH57';   // תיקיית התמונות של הגלריה
-const DATA_FILE_NAME = 'naama-site-data.json';           // הקובץ שנוצר ב-My Drive ומחזיק את תוכן האתר
-const MAX_FAILS = 8;                                     // ניסיונות סיסמה שגויים לפני חסימה
-const LOCK_SECONDS = 900;                                // משך החסימה (15 דקות)
+var FOLDER_ID = '16m87owSSRfjEpgxak8I286BvqwfnTH57';   // gallery images folder
+var DATA_FILE_NAME = 'naama-site-data.json';           // created in My Drive, holds the site content
+var MAX_FAILS = 8;                                     // wrong attempts before lockout
+var LOCK_SECONDS = 900;                                // lockout duration (15 minutes)
 
-/* ============ נקודות כניסה ============ */
+// ---- entry points ----
 
 function doGet(e) {
   const p = (e && e.parameter) || {};
@@ -42,12 +33,12 @@ function doPost(e) {
     try { clean = sanitize_(req.data); }
     catch (err) { return out_({ ok: false, error: 'invalid_data', detail: String(err) }); }
     writeSite_(clean);
-    return out_({ ok: true });
+    return out_({ ok: true, v: 2 });
   }
   return out_({ ok: false, error: 'bad_request' });
 }
 
-/* ============ סיסמה ============ */
+// ---- password ----
 
 function checkPassword_(given) {
   const secret = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
@@ -71,7 +62,7 @@ function safeEqual_(a, b) {
   return diff === 0;
 }
 
-/* ============ אחסון תוכן האתר ============ */
+// ---- site storage ----
 
 function readSite_() {
   const cache = CacheService.getScriptCache();
@@ -82,7 +73,7 @@ function readSite_() {
   try {
     const text = DriveApp.getFileById(id).getBlob().getDataAsString('UTF-8');
     const data = JSON.parse(text);
-    if (text.length < 90000) cache.put('site', text, 300);
+    try { if (text.length < 40000) cache.put('site', text, 300); } catch (err) {}
     return data;
   } catch (err) {
     return null;
@@ -106,7 +97,7 @@ function writeSite_(data) {
   }
 }
 
-/* ============ ולידציה – נשמר רק מה שמוכר ============ */
+// ---- validation - only known fields are stored ----
 
 function str_(v, max, name) {
   if (v == null) return '';
@@ -120,10 +111,20 @@ function url_(v, name) {
   return s;
 }
 
+function list_(a, max, name, fn) {
+  if (a == null) return [];
+  if (!Array.isArray(a) || a.length > max) throw name + ' list';
+  return a.map(function (r) {
+    if (!r || typeof r !== 'object') throw name + ' item';
+    return fn(r);
+  });
+}
+
 function sanitize_(d) {
   if (!d || typeof d !== 'object') throw 'no data';
   if (!Array.isArray(d.books) || d.books.length > 40) throw 'books';
   const g = d.gallery || {}, s = d.story || {}, i = d.info || {}, f = d.footer || {};
+  const w = d.writes || {}, n = d.news || {}, v = d.video || {};
   const clean = {
     version: 1,
     info: { title: str_(i.title, 100, 'info.title'), text: str_(i.text, 8000, 'info.text') },
@@ -139,13 +140,22 @@ function sanitize_(d) {
         })
       };
     }),
-    footer: { line1: str_(f.line1, 300, 'footer.line1'), line2: str_(f.line2, 300, 'footer.line2') }
+    footer: { line1: str_(f.line1, 300, 'footer.line1'), line2: str_(f.line2, 300, 'footer.line2') },
+    video: { url: url_(v.url, 'video.url') },
+    writes: {
+      title: str_(w.title, 100, 'writes.title'), subtitle: str_(w.subtitle, 100, 'writes.subtitle'),
+      items: list_(w.items, 500, 'writes', function (r) { return { name: str_(r.name, 100, 'writes.name'), text: str_(r.text, 6000, 'writes.text') }; })
+    },
+    news: {
+      title: str_(n.title, 100, 'news.title'), subtitle: str_(n.subtitle, 100, 'news.subtitle'),
+      items: list_(n.items, 300, 'news', function (r) { return { title: str_(r.title, 200, 'news.title'), source: str_(r.source, 100, 'news.source'), url: url_(r.url, 'news.url') }; })
+    }
   };
-  if (JSON.stringify(clean).length > 200000) throw 'too large';
+  if (JSON.stringify(clean).length > 400000) throw 'too large';
   return clean;
 }
 
-/* ============ גלריה ============ */
+// ---- gallery ----
 
 function gallery_(p) {
   const cache = CacheService.getScriptCache();
@@ -159,7 +169,7 @@ function gallery_(p) {
     updated: new Date().toISOString(),
     sections: sections.filter(function (s) { return s.images.length > 0; })
   });
-  if (text.length < 90000) cache.put('gallery', text, 600);
+  try { if (text.length < 40000) cache.put('gallery', text, 600); } catch (err) {}
   return json_(text);
 }
 
@@ -181,7 +191,7 @@ function walk_(folder, path, sections) {
   subs.forEach(function (s) { walk_(s.folder, path ? path + ' / ' + s.name : s.name, sections); });
 }
 
-/* ============ פלט ============ */
+// ---- output ----
 
 function json_(text) { return ContentService.createTextOutput(text).setMimeType(ContentService.MimeType.JSON); }
 function out_(obj) { return json_(JSON.stringify(obj)); }

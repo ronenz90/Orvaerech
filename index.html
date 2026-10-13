@@ -32,9 +32,13 @@
 <main class="paper">
   <div class="wrap">
     <nav class="banners" aria-label="תוכן נוסף">
+      <button class="banner" id="btn-writes" type="button"><strong id="writes-title">כותבים לנעמה</strong><span id="writes-sub"></span></button>
+      <div id="news"></div>
       <button class="banner" id="btn-gallery" type="button"><strong id="gallery-title">תמונות של נעמה ז״ל</strong><span id="gallery-sub">גלריה</span></button>
       <button class="banner" id="btn-story" type="button"><strong id="story-title">סיפור נפילתה של נעמה ז״ל</strong><span id="story-sub"></span></button>
     </nav>
+
+    <div class="video" id="video" hidden></div>
 
     <h2 class="sr-only">דף קישורים</h2>
     <img class="links-title" src="assets/title-links.png" alt="דף קישורים" width="630" height="127">
@@ -81,6 +85,14 @@
   </div>
   <button class="lnav lprev" id="light-prev" type="button" aria-label="הקודמת">›</button>
   <button class="lnav lnext" id="light-next" type="button" aria-label="הבאה">‹</button>
+</dialog>
+
+<!-- כותבים לנעמה -->
+<dialog class="modal" id="dlg-writes" aria-labelledby="writes-head">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="writes-head">כותבים לנעמה</h2><button class="close" type="button" data-close aria-label="סגירה">×</button></div>
+    <div class="modal-body pad"><div class="writes" id="writes-list"></div></div>
+  </div>
 </dialog>
 
 <!-- הסיפור -->
@@ -146,6 +158,7 @@
 </dialog>
 
 <script src="js/drive.js"></script>
+<script src="js/defaults.js"></script>
 <script src="js/config.js"></script>
 <script src="js/main.js"></script>
 </body>

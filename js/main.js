@@ -104,7 +104,34 @@
     return n;
   }
 
+  function makeBook(group, title, cnt, isOpen, fill) {
+    var sec = el("section", "book" + (isOpen ? " open" : ""));
+    var head = el("button", "head");
+    head.type = "button";
+    head.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    head.appendChild(el("span", "bt", title));
+    if (cnt) head.appendChild(el("span", "cnt", cnt));
+    var chev = el("span", "chev", "\u2304"); chev.setAttribute("aria-hidden", "true");
+    head.appendChild(chev);
+    head.addEventListener("click", function () {
+      var was = sec.classList.contains("open");
+      group.querySelectorAll(".book").forEach(function (x) {
+        x.classList.remove("open"); x.firstChild.setAttribute("aria-expanded", "false");
+      });
+      if (!was) {
+        sec.classList.add("open"); head.setAttribute("aria-expanded", "true");
+        setTimeout(function () { sec.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 360);
+      }
+    });
+    var panel = el("div", "panel"), inner = el("div"), ul = el("ul", "list");
+    fill(ul);
+    inner.appendChild(ul); panel.appendChild(inner);
+    sec.appendChild(head); sec.appendChild(panel);
+    return sec;
+  }
+
   function render(d) {
+    SiteDefaults.fill(d);
     /* banners */
     $("gallery-title").textContent = d.gallery.title;
     $("gallery-sub").textContent = d.gallery.subtitle || "";
@@ -136,47 +163,79 @@
     if (prev) openIdx = Number(prev.getAttribute("data-i"));
     box.textContent = "";
     d.books.forEach(function (b, i) {
-      var sec = el("section", "book" + (i === openIdx ? " open" : ""));
-      sec.setAttribute("data-i", i);
-      var head = el("button", "head");
-      head.type = "button";
-      head.setAttribute("aria-expanded", i === openIdx ? "true" : "false");
-      head.appendChild(el("span", "bt", b.title));
-      head.appendChild(el("span", "cnt", b.rows.length + " פרשות"));
-      var chev = el("span", "chev", "\u2304"); chev.setAttribute("aria-hidden", "true");
-      head.appendChild(chev);
-      head.addEventListener("click", function () {
-        var was = sec.classList.contains("open");
-        box.querySelectorAll(".book").forEach(function (x) {
-          x.classList.remove("open"); x.firstChild.setAttribute("aria-expanded", "false");
+      var sec = makeBook(box, b.title, b.rows.length + " פרשות", i === openIdx, function (ul) {
+        b.rows.forEach(function (r) {
+          var li = el("li");
+          var linked = r.label && /^https?:\/\//i.test(r.url || "");
+          var row = el(linked ? "a" : "div", "li" + (linked ? "" : " soon"));
+          row.appendChild(el("span", "pn", r.name));
+          row.appendChild(el("span", "dots"));
+          row.appendChild(el("span", "lb", linked ? r.label : (r.label || "בקרוב")));
+          if (linked) {
+            row.appendChild(el("span", "go", "\u2039"));
+            row.href = r.url; row.rel = "noopener";
+            row.addEventListener("click", function (ev) {
+              if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button) return;
+              ev.preventDefault(); openViewer(r.label, r.url);
+            });
+          }
+          li.appendChild(row); ul.appendChild(li);
         });
-        if (!was) {
-          sec.classList.add("open"); head.setAttribute("aria-expanded", "true");
-          setTimeout(function () { sec.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 360);
-        }
       });
-      var panel = el("div", "panel"), inner = el("div"), ul = el("ul", "list");
-      b.rows.forEach(function (r) {
-        var li = el("li");
-        var linked = r.label && /^https?:\/\//i.test(r.url || "");
-        var row = el(linked ? "a" : "div", "li" + (linked ? "" : " soon"));
-        row.appendChild(el("span", "pn", r.name));
-        row.appendChild(el("span", "dots"));
-        row.appendChild(el("span", "lb", linked ? r.label : (r.label || "בקרוב")));
-        if (linked) {
-          row.appendChild(el("span", "go", "\u2039"));
-          row.href = r.url; row.rel = "noopener";
-          row.addEventListener("click", function (ev) {
-            if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button) return;
-            ev.preventDefault(); openViewer(r.label, r.url);
-          });
-        }
-        li.appendChild(row); ul.appendChild(li);
-      });
-      inner.appendChild(ul); panel.appendChild(inner);
-      sec.appendChild(head); sec.appendChild(panel);
+      sec.setAttribute("data-i", i);
       box.appendChild(sec);
     });
+
+    /* news: "מספרים על נעמה" - opens in place, links go to the articles */
+    var nbox = $("news");
+    var nOpen = !!nbox.querySelector(".book.open");
+    nbox.textContent = "";
+    var items = (d.news.items || []).filter(function (x) { return x.title || x.url; });
+    nbox.appendChild(makeBook(nbox, d.news.title, items.length ? items.length + " כתבות" : "", nOpen, function (ul) {
+      if (!items.length) { var e0 = el("li"); e0.appendChild(el("div", "li soon", "עדיין אין כתבות")); ul.appendChild(e0); return; }
+      items.forEach(function (x) {
+        var li = el("li");
+        var ok = /^https?:\/\//i.test(x.url || "");
+        var row = el(ok ? "a" : "div", "li art" + (ok ? "" : " soon"));
+        var t = el("span", "art-t", x.title || x.url);
+        if (x.source) t.appendChild(el("span", "art-s", x.source));
+        row.appendChild(t);
+        if (ok) { row.appendChild(el("span", "go", "\u2197")); row.href = x.url; row.target = "_blank"; row.rel = "noopener noreferrer"; }
+        li.appendChild(row); ul.appendChild(li);
+      });
+    }));
+
+    /* writes: "כותבים לנעמה" */
+    $("writes-title").textContent = d.writes.title;
+    $("writes-sub").textContent = d.writes.subtitle || "";
+    $("writes-head").textContent = d.writes.title;
+    var wbox = $("writes-list"); wbox.textContent = "";
+    var msgs = (d.writes.items || []).filter(function (x) { return x.name || x.text; });
+    if (!msgs.length) wbox.appendChild(el("p", "empty", "עדיין אין דברים כתובים."));
+    msgs.forEach(function (m) {
+      var c = el("article", "msg");
+      if (m.name) c.appendChild(el("h3", null, m.name));
+      if (m.text) c.appendChild(el("p", null, m.text));
+      wbox.appendChild(c);
+    });
+    $("btn-writes").onclick = function () { open($("dlg-writes")); $("dlg-writes").querySelector(".modal-body").scrollTop = 0; };
+
+    /* video */
+    var vid = SiteDefaults.ytId(d.video.url), vbox = $("video");
+    if (vid) {
+      var cur = vbox.getAttribute("data-id");
+      if (cur !== vid) {
+        vbox.textContent = "";
+        var fr = el("iframe");
+        fr.src = "https://www.youtube-nocookie.com/embed/" + vid + "?rel=0";
+        fr.title = "סרטון"; fr.loading = "lazy"; fr.allowFullscreen = true;
+        fr.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen");
+        fr.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+        var frame = el("div", "frame"); frame.appendChild(fr); vbox.appendChild(frame);
+        vbox.setAttribute("data-id", vid);
+      }
+      vbox.hidden = false;
+    } else { vbox.textContent = ""; vbox.removeAttribute("data-id"); vbox.hidden = true; }
 
     /* footer */
     $("foot-1").textContent = d.footer.line1;

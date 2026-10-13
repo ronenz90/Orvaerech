@@ -42,15 +42,21 @@
   }
 
   /* ---------- general fields ---------- */
+  function paintYt(input) {
+    var v = input.value.trim();
+    input.classList.toggle("bad", !!v && !window.SiteDefaults.ytId(v));
+  }
   function bindGeneral() {
     document.querySelectorAll("[data-bind]").forEach(function (i) {
       i.value = getPath(data, i.dataset.bind) || "";
       if (i.hasAttribute("data-url")) paintUrl(i);
       if (i.hasAttribute("data-feed")) paintFeed(i);
+      if (i.hasAttribute("data-yt")) paintYt(i);
       i.oninput = function () {
         setPath(data, i.dataset.bind, i.value);
         if (i.hasAttribute("data-url")) paintUrl(i);
         if (i.hasAttribute("data-feed")) paintFeed(i);
+        if (i.hasAttribute("data-yt")) paintYt(i);
         setDirty(true);
       };
     });
@@ -90,6 +96,56 @@
     });
   }
 
+  /* ---------- writes / news items ---------- */
+  function moveItem(arr, i, d) { var j = i + d; if (j < 0 || j >= arr.length) return; var x = arr.splice(i, 1)[0]; arr.splice(j, 0, x); setDirty(true); renderItems(); }
+  function field(label, node) { var l = el("label", null, label); l.appendChild(node); return l; }
+  function itemCard(arr, i, kind) {
+    var r = arr[i], card = el("div", "item");
+    var top = el("div", "item-top");
+    top.appendChild(el("strong", null, (kind === "writes" ? "הודעה " : "כתבה ") + (i + 1)));
+    top.appendChild(el("span", "spacer"));
+    top.appendChild(btn("↑", "העלאה", function () { moveItem(arr, i, -1); }, i === 0));
+    top.appendChild(btn("↓", "הורדה", function () { moveItem(arr, i, 1); }, i === arr.length - 1));
+    top.appendChild(btn("✕", "מחיקה", function () {
+      if (confirm("למחוק את הפריט?")) { arr.splice(i, 1); setDirty(true); renderItems(); }
+    }, false, "danger"));
+    card.appendChild(top);
+    function inp(key, ph, ltr, tag) {
+      var n = el(tag || "input"); if (tag === "textarea") n.rows = 5;
+      n.value = r[key] || ""; if (ph) n.placeholder = ph; if (ltr) n.dir = "ltr";
+      n.oninput = function () { r[key] = ltr ? n.value.trim() : n.value; setDirty(true); if (key === "url") paintUrl(n); };
+      if (key === "url") paintUrl(n);
+      return n;
+    }
+    if (kind === "writes") {
+      card.appendChild(field("שם", inp("name", "שם הכותב/ת")));
+      card.appendChild(field("הטקסט", inp("text", "מה כתבו לנעמה", false, "textarea")));
+    } else {
+      card.appendChild(field("כותרת הכתבה", inp("title", "כותרת")));
+      card.appendChild(field("מקור (אופציונלי)", inp("source", "למשל: ישראל היום, 12.3.2024")));
+      var u = inp("url", "https://…", true);
+      var f = field("קישור לכתבה", u);
+      var test = el("a", "btn small", "בדיקה ↗"); test.target = "_blank"; test.rel = "noopener"; test.href = "#";
+      test.onclick = function (e) { if (!u.value.trim()) { e.preventDefault(); return; } test.href = u.value.trim(); };
+      f.appendChild(test); card.appendChild(f);
+    }
+    return card;
+  }
+  function renderItems() {
+    [["writes", "writes-items"], ["news", "news-items"]].forEach(function (p) {
+      var box = $(p[1]); box.textContent = "";
+      var arr = data[p[0]].items;
+      if (!arr.length) box.appendChild(el("p", "hint", "אין פריטים עדיין."));
+      arr.forEach(function (_, i) { box.appendChild(itemCard(arr, i, p[0])); });
+    });
+  }
+  function addItem(key, blank, selector) {
+    data[key].items.push(blank); setDirty(true); renderItems();
+    var cards = $(selector).querySelectorAll(".item"), f = cards[cards.length - 1].querySelector("input,textarea"); if (f) f.focus();
+  }
+  $("btn-add-write").onclick = function () { addItem("writes", { name: "", text: "" }, "writes-items"); };
+  $("btn-add-news").onclick = function () { addItem("news", { title: "", source: "", url: "" }, "news-items"); };
+
   function btn(text, title, fn, disabled, cls) {
     var b = el("button", "btn small " + (cls || ""), text); b.type = "button";
     if (title) b.title = title; if (disabled) b.disabled = true; b.onclick = fn; return b;
@@ -123,12 +179,15 @@
   /* ---------- JSON ---------- */
   function clean() {
     var out = JSON.parse(JSON.stringify(data));
+    out.writes.items = out.writes.items.filter(function (r) { return (r.name || "").trim() || (r.text || "").trim(); });
+    out.news.items = out.news.items.filter(function (r) { return (r.title || "").trim() || (r.url || "").trim(); });
     out.books.forEach(function (b) { b.rows = b.rows.filter(function (r) { return r.name.trim() || r.label.trim() || r.url.trim(); }); });
     return out;
   }
   function toJSON() { return JSON.stringify(clean(), null, 2) + "\n"; }
   function allUrls() {
     var d = clean(), list = [d.gallery.url, d.story.url];
+    d.news.items.forEach(function (r) { list.push(r.url); });
     d.books.forEach(function (b) { b.rows.forEach(function (r) { list.push(r.url); }); });
     return list.filter(Boolean);
   }
@@ -180,9 +239,9 @@
   function enter() {
     return loadData().then(function (x) {
       data = x.d;
-      ["gallery", "story", "info", "footer"].forEach(function (k) { if (!data[k]) data[k] = {}; });
+      window.SiteDefaults.fill(data);
       $("login").hidden = true; $("app").hidden = false;
-      bindGeneral(); renderBooks();
+      bindGeneral(); renderBooks(); renderItems();
       if (x.fromServer) { setDirty(false); msg("", ""); }
       else { setDirty(true); msg("הנתונים נטענו מהקובץ המקורי. לחצו \"שמירה\" פעם אחת כדי להעביר אותם לשרת – מכאן והלאה העריכה לא תדרוש עדכון ריפוזיטורי.", ""); }
     });
@@ -213,7 +272,8 @@
     var done = function () { b.disabled = false; b.textContent = "שמירה"; };
     call({ action: "save", password: pass, data: clean() })
       .then(function (r) {
-        if (r && r.ok) { setDirty(false); msg("נשמר. האתר מתעדכן מיד אצל מי שפותח אותו מעכשיו (מי שכבר פתוח אצלו יראה בטעינה הבאה).", "ok"); }
+        if (r && r.ok && !(r.v >= 2)) { msg("השרת שמר רק חלק מהנתונים: הקוד שלו (backend.gs) ישן. יש להדביק את הקוד העדכני ולפרסם גרסה חדשה (ראו הוראות), ואז לשמור שוב.", "err"); }
+        else if (r && r.ok) { setDirty(false); msg("נשמר. האתר מתעדכן מיד אצל מי שפותח אותו מעכשיו (מי שכבר פתוח אצלו יראה בטעינה הבאה).", "ok"); }
         else if (r && (r.error === "bad_password" || r.error === "locked")) { dirty = false; forget(); showLogin(errText(r)); }
         else msg(errText(r), "err");
       })

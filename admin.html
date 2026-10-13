@@ -63,6 +63,11 @@
       </fieldset>
     </div>
     <fieldset>
+      <legend>סרטון YouTube בראש הדף</legend>
+      <label>קישור לסרטון <small>(כל קישור יוטיוב רגיל. ריק = בלי סרטון)</small>
+        <input data-bind="video.url" data-yt dir="ltr" placeholder="https://youtu.be/…"></label>
+    </fieldset>
+    <fieldset>
       <legend>כפתור "מידע על האתר"</legend>
       <label>כותרת החלון<input data-bind="info.title"></label>
       <label>טקסט <small>(שורה ריקה = פסקה חדשה)</small><textarea rows="6" data-bind="info.text"></textarea></label>
@@ -74,12 +79,33 @@
     </fieldset>
   </section>
 
+  <section class="card" id="sec-writes">
+    <h2>כותבים לנעמה</h2>
+    <div class="grid2">
+      <label>כותרת הבאנר<input data-bind="writes.title"></label>
+      <label>כותרת משנה<input data-bind="writes.subtitle"></label>
+    </div>
+    <div id="writes-items" class="items"></div>
+    <p><button class="btn" id="btn-add-write" type="button">+ הוספת הודעה</button></p>
+  </section>
+
+  <section class="card" id="sec-news">
+    <h2>מספרים על נעמה</h2>
+    <div class="grid2">
+      <label>כותרת הבאנר<input data-bind="news.title"></label>
+      <label>כותרת משנה<input data-bind="news.subtitle"></label>
+    </div>
+    <div id="news-items" class="items"></div>
+    <p><button class="btn" id="btn-add-news" type="button">+ הוספת כתבה</button></p>
+  </section>
+
   <div id="books"></div>
   <p><button class="btn" id="btn-add-book" type="button">+ הוספת ספר / קבוצה</button></p>
 </main>
 </div>
 
 <script src="js/drive.js"></script>
+<script src="js/defaults.js"></script>
 <script src="js/config.js"></script>
 <script src="js/admin.js"></script>
 </body>
