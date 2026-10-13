@@ -35,14 +35,22 @@
     if (kindEl) kindEl.textContent = st.k;
   }
 
+  function paintFeed(input) {
+    var v = input.value.trim(), bad = false, warn = false;
+    if (v) { try { var u = new URL(v); bad = u.protocol !== "https:"; warn = !/^script\.google(usercontent)?\.com$/.test(u.hostname); } catch (e) { bad = true; } }
+    input.classList.toggle("bad", bad); input.classList.toggle("warn", !bad && warn);
+  }
+
   /* ---------- general fields ---------- */
   function bindGeneral() {
     document.querySelectorAll("[data-bind]").forEach(function (i) {
       i.value = getPath(data, i.dataset.bind) || "";
       if (i.hasAttribute("data-url")) paintUrl(i);
+      if (i.hasAttribute("data-feed")) paintFeed(i);
       i.oninput = function () {
         setPath(data, i.dataset.bind, i.value);
         if (i.hasAttribute("data-url")) paintUrl(i);
+        if (i.hasAttribute("data-feed")) paintFeed(i);
         setDirty(true);
       };
     });

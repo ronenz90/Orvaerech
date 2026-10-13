@@ -21,6 +21,80 @@
     open(viewer);
   }
 
+
+  /* ---------- gallery ---------- */
+  var galLoaded = false, items = [], cur = 0;
+  function thumb(id, w) { return "https://drive.google.com/thumbnail?id=" + encodeURIComponent(id) + "&sz=w" + w; }
+
+  function showEmbed(g) {
+    var e = D.embed(g.url), f = $("gallery-frame");
+    $("gallery-view").hidden = true; f.hidden = false;
+    if (e) { e.src = e.src.replace("#list", "#grid"); $("gallery-ext").href = e.open; if (!f.getAttribute("src")) f.setAttribute("src", e.src); }
+  }
+  function openGallery(g) {
+    open($("dlg-gallery"));
+    if (g.url) { var e = D.embed(g.url); if (e) $("gallery-ext").href = e.open; }
+    if (!g.feed) { showEmbed(g); return; }
+    var view = $("gallery-view");
+    $("gallery-frame").hidden = true; view.hidden = false;
+    if (galLoaded) return;
+    view.textContent = "";
+    view.appendChild(el("p", "gal-msg", "טוען תמונות…"));
+    fetch(g.feed + (g.feed.indexOf("?") > -1 ? "&" : "?") + "v=" + Math.floor(Date.now() / 60000))
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (data) { buildGallery(view, data); galLoaded = true; })
+      .catch(function () {
+        view.hidden = true; showEmbed(g);
+      });
+  }
+  function buildGallery(view, data) {
+    view.textContent = ""; items = [];
+    (data.sections || []).forEach(function (sec) {
+      if (!sec.images || !sec.images.length) return;
+      if (sec.name) view.appendChild(el("h3", "gal-h", sec.name));
+      var grid = el("div", "gal-grid");
+      sec.images.forEach(function (im) {
+        var idx = items.push(im) - 1;
+        var b = el("button", "gal-t"); b.type = "button"; b.setAttribute("aria-label", "הגדלת תמונה " + (idx + 1));
+        var img = el("img"); img.loading = "lazy"; img.decoding = "async"; img.alt = ""; img.src = thumb(im.id, 400);
+        img.onerror = function () { b.classList.add("broken"); };
+        b.appendChild(img); b.onclick = function () { showLight(idx); };
+        grid.appendChild(b);
+      });
+      view.appendChild(grid);
+    });
+    if (!items.length) view.appendChild(el("p", "gal-msg", "אין עדיין תמונות בגלריה."));
+  }
+
+  /* lightbox */
+  var light = $("dlg-light"), limg = $("light-img");
+  function showLight(i) {
+    if (!items.length) return;
+    cur = (i + items.length) % items.length;
+    var im = items[cur];
+    limg.classList.add("loading");
+    limg.onload = function () { limg.classList.remove("loading"); };
+    limg.src = thumb(im.id, 1600);
+    $("light-count").textContent = (cur + 1) + " / " + items.length;
+    $("light-ext").href = "https://drive.google.com/file/d/" + encodeURIComponent(im.id) + "/view";
+    [cur + 1, cur - 1].forEach(function (j) { var n = items[(j + items.length) % items.length]; if (n) new Image().src = thumb(n.id, 1600); });
+    if (!light.open) light.showModal();
+  }
+  $("light-close").onclick = function () { light.close(); };
+  $("light-next").onclick = function () { showLight(cur + 1); };
+  $("light-prev").onclick = function () { showLight(cur - 1); };
+  light.addEventListener("click", function (e) { if (e.target === light) light.close(); });
+  light.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowLeft") showLight(cur + 1);          /* RTL: left = forward */
+    else if (e.key === "ArrowRight") showLight(cur - 1);
+  });
+  var sx = null;
+  light.addEventListener("touchstart", function (e) { sx = e.touches[0].clientX; }, { passive: true });
+  light.addEventListener("touchend", function (e) {
+    if (sx == null) return; var dx = e.changedTouches[0].clientX - sx; sx = null;
+    if (Math.abs(dx) > 45) showLight(cur + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
   /* ---------- render from data/site.json ---------- */
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -44,16 +118,8 @@
     String(d.info.text || "").split(/\n{2,}/).forEach(function (t) { if (t.trim()) info.appendChild(el("p", null, t.trim())); });
 
     /* gallery */
-    var gal = D.embed(d.gallery.url);
-    var gframe = $("gallery-frame");
-    gframe.removeAttribute("src");
-    if (gal) { gal.src = gal.src.replace("#list", "#grid"); $("gallery-ext").href = gal.open; }
-    $("btn-gallery").onclick = function () {
-      if (gal) {
-        if (!gframe.getAttribute("src")) gframe.setAttribute("src", gal.src);
-        open($("dlg-gallery"));
-      } else { alert("קישור הגלריה עדיין לא הוגדר."); }
-    };
+    var gal = d.gallery;
+    $("btn-gallery").onclick = function () { openGallery(gal); };
 
     /* story: Drive link if set, otherwise built-in text */
     $("btn-story").onclick = function () {

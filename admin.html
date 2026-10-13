@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="only light">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>ניהול האתר – אור וערך לנעמה</title>
@@ -34,6 +35,8 @@
         <label>כותרת משנה<input data-bind="gallery.subtitle"></label>
         <label>קישור לתיקיית Google Drive <small>(חייבת להיות משותפת – "כל מי שיש לו את הקישור")</small>
           <input data-bind="gallery.url" data-url dir="ltr" placeholder="https://drive.google.com/drive/folders/…"></label>
+        <label>קישור לסקריפט הגלריה (Apps Script) <small>(מציג גלריה נגללת כולל תיקיות משנה. ריק = תצוגת Drive רגילה. הקובץ gallery-feed.gs מצורף)</small>
+          <input data-bind="gallery.feed" data-feed dir="ltr" placeholder="https://script.google.com/macros/s/…/exec"></label>
       </fieldset>
       <fieldset>
         <legend>באנר סיפור הנפילה</legend>

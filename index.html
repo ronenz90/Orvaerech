@@ -2,6 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="only light">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>אור וערך לנעמה – דף קישורים</title>
 <meta name="description" content="אור וערך לנעמה – דף קישורים שבועי לפרשת השבוע ברוח אימון הנפש, לעילוי נשמת נעמה בת יעל">
@@ -63,8 +64,23 @@
       <h2 id="gallery-head">תמונות של נעמה ז״ל</h2>
       <div class="actions"><a class="ext" id="gallery-ext" href="#" target="_blank" rel="noopener">פתיחה בדרייב ↗</a><button class="close" type="button" data-close aria-label="סגירה">×</button></div>
     </div>
-    <div class="modal-body"><iframe id="gallery-frame" title="גלריית תמונות" loading="lazy"></iframe></div>
+    <div class="modal-body gal-body">
+      <div id="gallery-view" class="gal" hidden></div>
+      <iframe id="gallery-frame" title="גלריית תמונות" hidden></iframe>
+    </div>
   </div>
+</dialog>
+
+<!-- הגדלת תמונה -->
+<dialog class="light" id="dlg-light" aria-label="תצוגת תמונה">
+  <img id="light-img" alt="">
+  <div class="light-bar">
+    <button class="lbtn" id="light-close" type="button" aria-label="סגירה">×</button>
+    <span id="light-count" class="lcount"></span>
+    <a id="light-ext" class="lext" href="#" target="_blank" rel="noopener">פתיחה בדרייב ↗</a>
+  </div>
+  <button class="lnav lprev" id="light-prev" type="button" aria-label="הקודמת">›</button>
+  <button class="lnav lnext" id="light-next" type="button" aria-label="הבאה">‹</button>
 </dialog>
 
 <!-- הסיפור -->
