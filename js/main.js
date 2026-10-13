@@ -129,27 +129,53 @@
       $("dlg-story").querySelector(".modal-body").scrollTop = 0;
     };
 
-    /* books */
-    var box = $("books"); box.textContent = "";
-    d.books.forEach(function (b) {
-      var sec = el("section", "book");
-      sec.appendChild(el("h2", null, b.title));
+    /* books: one banner per book, unfolds into the parasha list */
+    var box = $("books");
+    var openIdx = 0;
+    var prev = box.querySelector(".book.open");
+    if (prev) openIdx = Number(prev.getAttribute("data-i"));
+    else if (box.children.length) openIdx = -1;
+    box.textContent = "";
+    d.books.forEach(function (b, i) {
+      var sec = el("section", "book" + (i === openIdx ? " open" : ""));
+      sec.setAttribute("data-i", i);
+      var head = el("button", "head");
+      head.type = "button";
+      head.setAttribute("aria-expanded", i === openIdx ? "true" : "false");
+      head.appendChild(el("span", "bt", b.title));
+      head.appendChild(el("span", "cnt", b.rows.length + " פרשות"));
+      var chev = el("span", "chev", "\u2304"); chev.setAttribute("aria-hidden", "true");
+      head.appendChild(chev);
+      head.addEventListener("click", function () {
+        var was = sec.classList.contains("open");
+        box.querySelectorAll(".book").forEach(function (x) {
+          x.classList.remove("open"); x.firstChild.setAttribute("aria-expanded", "false");
+        });
+        if (!was) {
+          sec.classList.add("open"); head.setAttribute("aria-expanded", "true");
+          setTimeout(function () { sec.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 360);
+        }
+      });
+      var panel = el("div", "panel"), inner = el("div"), ul = el("ul", "list");
       b.rows.forEach(function (r) {
-        var row = el("div", "row");
-        row.appendChild(el("span", "name", r.name + (r.dash && r.label ? " -" : "")));
-        var lbl = el("span", "lbl");
-        if (r.label && /^https?:\/\//i.test(r.url || "")) {
-          var a = el("a", null, r.label);
-          a.href = r.url; a.rel = "noopener";
-          a.addEventListener("click", function (ev) {
+        var li = el("li");
+        var linked = r.label && /^https?:\/\//i.test(r.url || "");
+        var row = el(linked ? "a" : "div", "li" + (linked ? "" : " soon"));
+        row.appendChild(el("span", "pn", r.name));
+        row.appendChild(el("span", "dots"));
+        row.appendChild(el("span", "lb", linked ? r.label : (r.label || "בקרוב")));
+        if (linked) {
+          row.appendChild(el("span", "go", "\u2039"));
+          row.href = r.url; row.rel = "noopener";
+          row.addEventListener("click", function (ev) {
             if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button) return;
             ev.preventDefault(); openViewer(r.label, r.url);
           });
-          lbl.appendChild(a);
-        } else if (r.label) { lbl.textContent = r.label; }
-        row.appendChild(lbl);
-        sec.appendChild(row);
+        }
+        li.appendChild(row); ul.appendChild(li);
       });
+      inner.appendChild(ul); panel.appendChild(inner);
+      sec.appendChild(head); sec.appendChild(panel);
       box.appendChild(sec);
     });
 
