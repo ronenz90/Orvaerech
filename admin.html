@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ניהול האתר – אור וערך לנעמה</title>
+<link rel="icon" href="assets/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-in">
+    <h1>ניהול האתר</h1>
+    <span class="chip" id="chip">נטען…</span>
+    <span class="spacer"></span>
+    <button class="btn ghost" id="btn-settings" type="button">הגדרות GitHub</button>
+    <button class="btn ghost" id="btn-download" type="button">הורדת site.json</button>
+    <button class="btn primary" id="btn-save" type="button">שמירה באתר</button>
+  </div>
+</header>
+
+<main class="main">
+  <p class="note" id="msg" role="status" hidden></p>
+
+  <section class="card" id="sec-general">
+    <h2>באנרים ותוכן כללי</h2>
+    <div class="grid2">
+      <fieldset>
+        <legend>באנר גלריית תמונות</legend>
+        <label>כותרת<input data-bind="gallery.title"></label>
+        <label>כותרת משנה<input data-bind="gallery.subtitle"></label>
+        <label>קישור לתיקיית Google Drive <small>(חייבת להיות משותפת – "כל מי שיש לו את הקישור")</small>
+          <input data-bind="gallery.url" data-url dir="ltr" placeholder="https://drive.google.com/drive/folders/…"></label>
+      </fieldset>
+      <fieldset>
+        <legend>באנר סיפור הנפילה</legend>
+        <label>כותרת<input data-bind="story.title"></label>
+        <label>כותרת משנה<input data-bind="story.subtitle"></label>
+        <label>קישור למסמך Drive <small>(אופציונלי. ריק = מוצג הסיפור המובנה באתר)</small>
+          <input data-bind="story.url" data-url dir="ltr" placeholder="https://docs.google.com/document/d/…"></label>
+      </fieldset>
+    </div>
+    <fieldset>
+      <legend>כפתור "מידע על האתר"</legend>
+      <label>כותרת החלון<input data-bind="info.title"></label>
+      <label>טקסט <small>(שורה ריקה = פסקה חדשה)</small><textarea rows="6" data-bind="info.text"></textarea></label>
+    </fieldset>
+    <fieldset>
+      <legend>שורות תחתית הדף</legend>
+      <label>שורה 1<input data-bind="footer.line1"></label>
+      <label>שורה 2<input data-bind="footer.line2"></label>
+    </fieldset>
+  </section>
+
+  <div id="books"></div>
+  <p><button class="btn" id="btn-add-book" type="button">+ הוספת ספר / קבוצה</button></p>
+</main>
+
+<dialog id="dlg-settings" class="dlg">
+  <form method="dialog" class="dlg-box" id="settings-form">
+    <h2>חיבור ל-GitHub</h2>
+    <p class="hint">כדי ששמירה תעדכן את האתר החי, צריך מפתח גישה (Personal Access Token). האתר כולו סטטי, לכן המפתח נשמר <b>רק בדפדפן הזה</b> ולא נשלח לאף מקום מלבד GitHub.</p>
+    <div class="grid2">
+      <label>שם משתמש / ארגון<input id="gh-owner" dir="ltr" autocomplete="off"></label>
+      <label>שם הריפוזיטורי<input id="gh-repo" dir="ltr" autocomplete="off"></label>
+      <label>ענף (Branch)<input id="gh-branch" dir="ltr" value="main"></label>
+      <label>נתיב הקובץ<input id="gh-path" dir="ltr" value="data/site.json"></label>
+    </div>
+    <label>Token <small>(Fine-grained, הרשאה Contents: Read and write לריפוזיטורי הזה בלבד)</small>
+      <input id="gh-token" type="password" dir="ltr" autocomplete="off" placeholder="github_pat_…"></label>
+    <details class="hint"><summary>איך יוצרים Token?</summary>
+      <ol>
+        <li>GitHub ← Settings ← Developer settings ← Personal access tokens ← <b>Fine-grained tokens</b> ← Generate new token.</li>
+        <li>Repository access: Only select repositories ← בוחרים את ריפוזיטורי האתר.</li>
+        <li>Permissions ← Repository permissions ← <b>Contents: Read and write</b>.</li>
+        <li>מעתיקים את ה-Token ומדביקים כאן.</li>
+      </ol>
+    </details>
+    <p class="note" id="gh-msg" hidden></p>
+    <div class="dlg-actions">
+      <button class="btn ghost" type="button" id="gh-test">בדיקת חיבור</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" type="button" id="gh-forget">מחיקת Token מהדפדפן</button>
+      <button class="btn primary" value="ok" id="gh-ok">שמירת הגדרות</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="js/drive.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

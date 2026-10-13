@@ -1,0 +1,342 @@
+{
+  "version": 1,
+  "info": {
+    "title": "מידע על האתר",
+    "text": "המידע על האתר יתווסף בהמשך."
+  },
+  "gallery": {
+    "title": "תמונות של נעמה ז״ל",
+    "subtitle": "גלריה",
+    "url": "https://drive.google.com/drive/folders/16m87owSSRfjEpgxak8I286BvqwfnTH57"
+  },
+  "story": {
+    "title": "סיפור נפילתה של נעמה ז״ל",
+    "subtitle": "שומרת נפשי – פרק ראשון, מפי האם",
+    "url": ""
+  },
+  "books": [
+    {
+      "title": "בראשית",
+      "rows": [
+        {
+          "name": "בראשית",
+          "dash": false,
+          "label": "אור האחריות",
+          "url": "https://drive.google.com/drive/folders/1C_JdHwz7Rlh84H2BMJJbegqDWvwKH3N8"
+        },
+        {
+          "name": "נח",
+          "dash": false,
+          "label": "אור הבחירה",
+          "url": "https://drive.google.com/file/d/1GUfAbbimeSRtrNqwyIFAPD05sfR3YQUN/view?usp=drivesdk"
+        },
+        {
+          "name": "לך לך",
+          "dash": false,
+          "label": "אור המוכנות לשינוי",
+          "url": "https://drive.google.com/file/d/1fOV5hE5sE_LY084sQsonjL3_ByB7XmVP/view?usp=drivesdk"
+        },
+        {
+          "name": "וירא",
+          "dash": false,
+          "label": "אור השליחות",
+          "url": "https://drive.google.com/file/d/1SKF7AUmTmt-f84gHc-nT1JXeHd47f_gm/view?usp=sharing"
+        },
+        {
+          "name": "חיי שרה",
+          "dash": false,
+          "label": "אור ההשתדלות ובניין העתיד",
+          "url": "https://drive.google.com/file/d/1mxAA3wEkmfMelHLAPDgiG-iJw1kQy8JE/view?usp=drivesdk"
+        },
+        {
+          "name": "תולדות",
+          "dash": false,
+          "label": "אור השונות ככוח חיים",
+          "url": "https://drive.google.com/file/d/1Gsunz0LyDrJkHw-mN2l-4N-7Unw-Ji7V/view?usp=sharing"
+        },
+        {
+          "name": "ויצא",
+          "dash": false,
+          "label": "אור החזון",
+          "url": "https://drive.google.com/file/d/1gAkH8ERuOPc2KaqNO_zIEt6Ny-Kl_m8w/view?usp=sharing"
+        },
+        {
+          "name": "וישלח",
+          "dash": false,
+          "label": "אור הענווה והכרת הטוב",
+          "url": "https://drive.google.com/file/d/1W3PpoGkmBYHLdqZxzjq3pTOrGHDmE9tX/view?usp=sharing"
+        },
+        {
+          "name": "וישב",
+          "dash": false,
+          "label": "אור ההתמודדות והחוסן הפנימי",
+          "url": "https://drive.google.com/file/d/1_Rfo8DDqKvLgHWb9zvPkFa9JlocIO53B/view?usp=sharing"
+        },
+        {
+          "name": "מקץ",
+          "dash": false,
+          "label": "אור הסליחה",
+          "url": "https://drive.google.com/file/d/1tfaPS1m9wZ-4mx1D9lXr2B6MekqKRelw/view?usp=sharing"
+        },
+        {
+          "name": "וייגש",
+          "dash": false,
+          "label": "אור הערבות ההדדית",
+          "url": "https://drive.google.com/file/d/1Tm1bBDSbWOtvrL0BTHLB0odeEQ9prCuP/view?usp=sharing"
+        },
+        {
+          "name": "ויחי",
+          "dash": false,
+          "label": "אור האחדות",
+          "url": "https://drive.google.com/file/d/1fjzvGwbYA5hKdV2KA1fgyZeLuXRZ2VFS/view?usp=drive_link"
+        }
+      ]
+    },
+    {
+      "title": "שמות",
+      "rows": [
+        {
+          "name": "שמות",
+          "dash": false,
+          "label": "אור התושיה והיוזמה",
+          "url": "https://drive.google.com/file/d/1iZdOQqUgLvTk5ycLxBh3i9ZSuvLb-kcy/view?usp=drive_link"
+        },
+        {
+          "name": "וארא",
+          "dash": false,
+          "label": "אור הנחישות",
+          "url": "https://drive.google.com/file/d/13kp9G2yTwA_bYE-XwN6-1HBBYvBUoFwJ/view?usp=drive_link"
+        },
+        {
+          "name": "בא",
+          "dash": false,
+          "label": "אור הזיכרון והנחלתו לדורות",
+          "url": "https://drive.google.com/file/d/1_SkLAIwuYZ1BQzjmyhGTmt6rEzVujy8j/view?usp=drive_link"
+        },
+        {
+          "name": "בשלח",
+          "dash": false,
+          "label": "אור השייכות",
+          "url": "https://drive.google.com/file/d/1nyiGBwrGiYO_atZ4zlC2frBEUr6G9RXV/view?usp=drive_link"
+        },
+        {
+          "name": "יתרו",
+          "dash": false,
+          "label": "אור ההקשבה",
+          "url": "https://drive.google.com/file/d/1nWkOeoIzL4df4uTCPDCxW-8EBXjNkJ81/view?usp=sharing"
+        },
+        {
+          "name": "משפטים",
+          "dash": false,
+          "label": "אור החמלה",
+          "url": "https://drive.google.com/drive/u/0/folders/1ov1QTquBI0JwW7VProJGTd6NrkW2kOYT"
+        },
+        {
+          "name": "תרומה",
+          "dash": true,
+          "label": "אור הנתינה",
+          "url": "https://drive.google.com/file/d/10QcuFQtEnXs7OpjQC-Q0bw8nWAbX1u0D/view?usp=drive_link"
+        },
+        {
+          "name": "תצוה",
+          "dash": true,
+          "label": "אור ההתמדה",
+          "url": "https://drive.google.com/file/d/1r08rjZQvE88xzg2sJl83USW-HEHF7brB/view?usp=drive_link"
+        },
+        {
+          "name": "כי תשא",
+          "dash": true,
+          "label": "אור האמון",
+          "url": "https://drive.google.com/file/d/1meZ7ItkDA6wkh5jB2WZ5bQzY-992DMoY/view?usp=drive_link"
+        },
+        {
+          "name": "ויקהל פקודי",
+          "dash": true,
+          "label": "אור הקהילתיות",
+          "url": "https://drive.google.com/file/d/1XmQdfMXu93JJHkrHzNSmYxY8gy90ZYQe/view?usp=drive_link"
+        }
+      ]
+    },
+    {
+      "title": "ויקרא",
+      "rows": [
+        {
+          "name": "ויקרא",
+          "dash": true,
+          "label": "אור הקרבה",
+          "url": "https://drive.google.com/file/d/1ptyyH5-QarJMI_f0c_LzX59tWb3QjCcp/view?usp=sharing"
+        },
+        {
+          "name": "צו",
+          "dash": true,
+          "label": "אור המיקוד",
+          "url": "https://drive.google.com/file/d/1LPPdY2CWviydnnQJQYM3OGB1ShpS25gJ/view?usp=drive_link"
+        },
+        {
+          "name": "שמיני",
+          "dash": true,
+          "label": "אור הדיוק",
+          "url": "https://drive.google.com/file/d/19-gV-5ZDTFkkWJl1UI7OyitKzKI6ABI2/view?usp=drive_link"
+        },
+        {
+          "name": "תזריע מצורע",
+          "dash": true,
+          "label": "אור השפה",
+          "url": "https://drive.google.com/file/d/18iXmgdC75P8qpI8KHz_bQd_9PpHGQmLa/view?usp=drive_link"
+        },
+        {
+          "name": "אחרי מות-קדושים",
+          "dash": true,
+          "label": "אור הוויסות העצמי",
+          "url": "https://drive.google.com/file/d/1TInlik2BMGdY3wQn9uRC3HUwjZ9v-PYL/view?usp=drive_link"
+        },
+        {
+          "name": "אמור",
+          "dash": true,
+          "label": "אור המסורת",
+          "url": "https://drive.google.com/file/d/1q-qPQV_W1HlksGzB-0659tYp7cNYeRtd/view?usp=sharing"
+        },
+        {
+          "name": "בהר-בחקותי",
+          "dash": true,
+          "label": "אור השוויון",
+          "url": "https://drive.google.com/file/d/1JrlofCVAPvfFxjHLSP1se6fngldJvpKH/view?usp=sharing"
+        }
+      ]
+    },
+    {
+      "title": "במדבר",
+      "rows": [
+        {
+          "name": "במדבר",
+          "dash": true,
+          "label": "אור הנראות",
+          "url": "https://drive.google.com/file/d/14LM9NR305UVH80aLM4YB_F7-HEjTGP_W/view?usp=sharing"
+        },
+        {
+          "name": "נשא",
+          "dash": true,
+          "label": "אור המשמעת העצמית",
+          "url": "https://drive.google.com/file/d/1lpLpmQF01cAS07zze9w3PFiJb2KVQMAB/view?usp=sharing"
+        },
+        {
+          "name": "בהעלותך",
+          "dash": true,
+          "label": "אור הגמישות המחשבתית",
+          "url": "https://drive.google.com/file/d/1syWZMpR2b17E5Cpaewb9VfqykT8FrMey/view?usp=sharing"
+        },
+        {
+          "name": "שלח לך",
+          "dash": true,
+          "label": "אור הביטוי העצמי",
+          "url": "https://drive.google.com/file/d/1beRQCdYvdnTW5dXiIlPOXobFyRNrhdEg/view?usp=drive_link"
+        },
+        {
+          "name": "קרח",
+          "dash": true,
+          "label": "אור העין הטובה",
+          "url": "https://drive.google.com/file/d/1jVo1cbWElXbXcRhI9d6ombS46ruOgvP0/view?usp=drive_link"
+        },
+        {
+          "name": "חקת",
+          "dash": true,
+          "label": "אור הסבלנות",
+          "url": "https://drive.google.com/file/d/1PRMUwDmoFixQt4P-vxHXCYfp2Q1zMbQn/view?usp=sharing"
+        },
+        {
+          "name": "בלק",
+          "dash": true,
+          "label": "אור הייחודיות",
+          "url": "https://drive.google.com/file/d/1idAFYtC73OK2XlMcmlJ6wekDfVM2Kis3/view?usp=drive_link"
+        },
+        {
+          "name": "פנחס",
+          "dash": true,
+          "label": "אור היציבות",
+          "url": "https://drive.google.com/file/d/1jn4ZH-fnkAA1KYylqhCesog44xOckzID/view?usp=sharing"
+        },
+        {
+          "name": "מטות-מסעי",
+          "dash": true,
+          "label": "אור הצמיחה",
+          "url": "https://drive.google.com/file/d/1asK4BP7ANhBKyh47M1zgX6UzytNmjPU_/view?usp=drive_link"
+        }
+      ]
+    },
+    {
+      "title": "דברים",
+      "rows": [
+        {
+          "name": "דברים",
+          "dash": true,
+          "label": "אור המחויבות",
+          "url": "https://drive.google.com/drive/u/0/folders/133Sf9rH7NupeGGwR7FclwTfn09fNY1Nh"
+        },
+        {
+          "name": "ואתחנן",
+          "dash": true,
+          "label": "אור ההשראה",
+          "url": "https://drive.google.com/drive/u/0/folders/133Sf9rH7NupeGGwR7FclwTfn09fNY1Nh"
+        },
+        {
+          "name": "עקב",
+          "dash": true,
+          "label": "אור האמונה",
+          "url": "https://drive.google.com/drive/u/0/folders/133Sf9rH7NupeGGwR7FclwTfn09fNY1Nh"
+        },
+        {
+          "name": "ראה",
+          "dash": true,
+          "label": "אור ההגשמה",
+          "url": "https://drive.google.com/drive/u/0/folders/133Sf9rH7NupeGGwR7FclwTfn09fNY1Nh"
+        },
+        {
+          "name": "שופטים",
+          "dash": false,
+          "label": "",
+          "url": ""
+        },
+        {
+          "name": "כי תצא",
+          "dash": false,
+          "label": "",
+          "url": ""
+        },
+        {
+          "name": "כי תבוא",
+          "dash": false,
+          "label": "",
+          "url": ""
+        },
+        {
+          "name": "נצבים",
+          "dash": false,
+          "label": "",
+          "url": ""
+        },
+        {
+          "name": "וילך",
+          "dash": false,
+          "label": "",
+          "url": ""
+        },
+        {
+          "name": "האזינו",
+          "dash": false,
+          "label": "",
+          "url": ""
+        },
+        {
+          "name": "וזאת הברכה",
+          "dash": false,
+          "label": "",
+          "url": ""
+        }
+      ]
+    }
+  ],
+  "footer": {
+    "line1": "הדף שבועי של פרשת השבוע ברוח אימון הנפש, לחיזוק ולהשראה | יעל בוני",
+    "line2": "- לעילוי נשמת נעמה בת יעל -"
+  }
+}
