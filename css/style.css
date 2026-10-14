@@ -56,7 +56,9 @@ img{max-width:100%}
 .banner strong{display:block;font-size:1.15rem;font-weight:700}
 .banner span{display:block;margin-top:1px;font-size:.88rem;font-weight:400;opacity:.8}
 
-.links-title{display:block;height:auto;width:min(58%,260px);margin:22px auto 0}
+.links-heading{margin:calc(26 * var(--u)) calc(24 * var(--u)) 0;text-align:center;color:#000;
+  font-family:"Frank Ruhl Libre","David Libre","Noto Serif Hebrew",serif;font-weight:900;line-height:1.2;
+  font-size:max(23px, calc(33 * var(--u)));text-wrap:balance}
 
 /* books: accordion banners */
 .books{display:grid;gap:12px;margin:calc(14 * var(--u)) calc(36 * var(--u)) 0}
@@ -93,6 +95,8 @@ a.li:hover,a.li:focus-visible{background:rgba(57,45,122,.1);outline:none;border-
 .slides{margin:0 calc(36 * var(--u)) 12px}
 .slides .frame{all:unset;display:block;position:relative;box-sizing:border-box;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;
   background:var(--purple-dark);border:3px solid var(--purple);box-shadow:0 2px 0 rgba(0,0,0,.18);cursor:pointer}
+.slides .ph{position:absolute;inset:0;display:grid;place-items:center;color:#fff;opacity:.75;font-size:.95rem}
+.slides div.frame{all:unset;display:block;position:relative;box-sizing:border-box;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:var(--purple-dark);border:3px solid var(--purple)}
 .slides .frame:focus-visible{outline:3px solid var(--purple-soft);outline-offset:2px}
 .slides img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .8s ease}
 .slides img.on{opacity:1}

@@ -267,7 +267,7 @@ function sanitize_(d) {
 function gallery_(p) {
   const cache = CacheService.getScriptCache();
   if (!p.refresh) {
-    const hit = cache.get('gallery');
+    const hit = getBig_('gallery');
     if (hit) return json_(hit);
   }
   const sections = [];
@@ -276,8 +276,34 @@ function gallery_(p) {
     updated: new Date().toISOString(),
     sections: sections.filter(function (s) { return s.images.length > 0; })
   });
-  try { if (text.length < 40000) cache.put('gallery', text, 600); } catch (err) {}
+  putBig_('gallery', text, 3600);
   return json_(text);
+}
+
+function putBig_(key, text, secs) {
+  const size = 30000;
+  const n = Math.ceil(text.length / size);
+  if (n > 40) return;
+  const o = {};
+  for (let i = 0; i < n; i++) o[key + '_' + i] = text.substr(i * size, size);
+  o[key + '_n'] = String(n);
+  try { CacheService.getScriptCache().putAll(o, secs); } catch (err) {}
+}
+
+function getBig_(key) {
+  const cache = CacheService.getScriptCache();
+  const n = Number(cache.get(key + '_n') || 0);
+  if (!n) return null;
+  const keys = [];
+  for (let i = 0; i < n; i++) keys.push(key + '_' + i);
+  const got = cache.getAll(keys);
+  let t = '';
+  for (let i = 0; i < n; i++) {
+    const part = got[key + '_' + i];
+    if (part == null) return null;
+    t += part;
+  }
+  return t;
 }
 
 function byName_(a, b) { return a.name.localeCompare(b.name, 'he', { numeric: true }); }
@@ -290,7 +316,7 @@ function walk_(folder, path, sections) {
     if (String(f.getMimeType()).indexOf('image/') === 0) images.push({ id: f.getId(), name: f.getName() });
   }
   images.sort(byName_);
-  sections.push({ name: path, images: images });
+  sections.push({ name: path, images: images.map(function (x) { return { id: x.id }; }) });
   const subs = [];
   const it = folder.getFolders();
   while (it.hasNext()) { const s = it.next(); subs.push({ name: s.getName(), folder: s }); }

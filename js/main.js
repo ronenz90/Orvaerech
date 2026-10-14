@@ -31,7 +31,10 @@
     $("gallery-view").hidden = true; f.hidden = false;
     if (e) { e.src = e.src.replace("#list", "#grid"); $("gallery-ext").href = e.open; if (!f.getAttribute("src")) f.setAttribute("src", e.src); }
   }
-  var galData = null, galPromise = null;
+  var galData = null, galPromise = null, GKEY = "naama_gal_v1";
+  function cachedGallery() {
+    try { var c = JSON.parse(localStorage.getItem(GKEY) || "null"); return c && c.sections ? c : null; } catch (e) { return null; }
+  }
   function fetchGallery(g) {
     var feed = g.feed || window.SITE_API;
     if (!feed) return Promise.reject(new Error("no feed"));
@@ -39,23 +42,32 @@
     if (!galPromise) {
       galPromise = fetch(feed + (feed.indexOf("?") > -1 ? "&" : "?") + "v=" + Math.floor(Date.now() / 60000))
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(function (d) { galData = d; return d; })
+        .then(function (d) {
+          if (!d || !d.sections) throw new Error("bad");
+          galData = d;
+          try { localStorage.setItem(GKEY, JSON.stringify({ sections: d.sections })); } catch (e) {}
+          return d;
+        })
         .catch(function (e) { galPromise = null; throw e; });
     }
     return galPromise;
   }
 
-  /* rotating picture above the video: every 5 seconds, from the same gallery */
-  var slideTimer = null, slideKey = "";
+  /* rotating picture above the video: every 5 seconds, from the same gallery.
+     Starts at once from the copy saved on this device, then the fresh list is fetched in the background. */
+  var slideTimer = null, slideKey = "", galCfg = { url: "", feed: "" };
+  function bootSlides() { startSlides(galCfg); }
   function startSlides(g) {
     var key = (g.feed || "") + "|" + (window.SITE_API || "");
     if (key === slideKey) return;
     slideKey = key; clearInterval(slideTimer);
-    var box = $("slides");
-    fetchGallery(g).then(function (data) {
+    var box = $("slides"), began = false;
+    function begin(data) {
+      if (began) return;
       var pics = [];
       (data.sections || []).forEach(function (s) { (s.images || []).forEach(function (im) { pics.push(im); }); });
       if (!pics.length) return;
+      began = true;
       for (var i = pics.length - 1; i > 0; i--) { var k = Math.floor(Math.random() * (i + 1)), t = pics[i]; pics[i] = pics[k]; pics[k] = t; }
       box.textContent = "";
       var frame = el("button", "frame"); frame.type = "button"; frame.setAttribute("aria-label", "פתיחת גלריית התמונות");
@@ -63,7 +75,7 @@
       var a = el("img"), b = el("img");
       [a, b].forEach(function (x) { x.alt = ""; x.decoding = "async"; frame.appendChild(x); });
       box.appendChild(frame);
-      function src(n) { return thumb(pics[n % pics.length].id, 1000); }
+      function src(n) { return thumb(pics[n % pics.length].id, 800); }
       a.onload = function () { a.classList.add("on"); box.hidden = false; };
       a.src = src(0);
       if (pics.length < 2) return;
@@ -76,7 +88,9 @@
         back.onload = function () { back.classList.add("on"); front.classList.remove("on"); front = back; new Image().src = src(n + 1); };
         back.src = src(n);
       }, 5000);
-    }).catch(function () {});
+    }
+    var c = cachedGallery(); if (c) begin(c);
+    fetchGallery(g).then(begin).catch(function () {});
   }
 
   function openGallery(g) {
@@ -88,9 +102,10 @@
     $("gallery-frame").hidden = true; view.hidden = false;
     if (galLoaded) return;
     view.textContent = "";
-    view.appendChild(el("p", "gal-msg", "טוען תמונות…"));
+    var saved = cachedGallery();
+    if (saved) buildGallery(view, saved); else view.appendChild(el("p", "gal-msg", "טוען תמונות…"));
     fetchGallery(g)
-      .then(function (data) { buildGallery(view, data); galLoaded = true; })
+      .then(function (data) { if (!saved || JSON.stringify(saved.sections) !== JSON.stringify(data.sections)) buildGallery(view, data); galLoaded = true; })
       .catch(function () {
         view.hidden = true; showEmbed(g);
       });
@@ -242,8 +257,9 @@
 
     /* gallery */
     var gal = d.gallery;
+    galCfg.url = gal.url || ""; galCfg.feed = gal.feed || ""; startSlides(galCfg);
     $("btn-gallery").onclick = function () { openGallery(gal); };
-    startSlides(gal);
+    slideG = gal;
 
     /* story: Drive link if set, otherwise built-in text */
     $("btn-story").onclick = function () {
@@ -358,6 +374,7 @@
       if (window.console) console.error(e);
     });
   }
+  bootSlides();
   try { var c = JSON.parse(localStorage.getItem(CKEY) || "null"); if (c && c.books) show(c); } catch (e) {}
   var slow = setTimeout(fromRepo, 5000);
   apiData().then(function (d) {
