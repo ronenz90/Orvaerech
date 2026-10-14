@@ -259,7 +259,6 @@
     var gal = d.gallery;
     galCfg.url = gal.url || ""; galCfg.feed = gal.feed || ""; startSlides(galCfg);
     $("btn-gallery").onclick = function () { openGallery(gal); };
-    slideG = gal;
 
     /* story: Drive link if set, otherwise built-in text */
     $("btn-story").onclick = function () {
@@ -353,7 +352,7 @@
   function show(d) {
     var s = JSON.stringify(d);
     if (s === lastJson) return;
-    lastJson = s; render(d);
+    render(d); lastJson = s;
   }
   function repoData() {
     return fetch("data/site.json?v=" + Date.now(), { cache: "no-store" })
