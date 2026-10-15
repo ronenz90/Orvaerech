@@ -328,7 +328,7 @@
     var done = function () { b.disabled = false; b.textContent = "שמירה"; };
     call({ action: "save", password: pass, data: clean() })
       .then(function (r) {
-        if (r && r.ok && !(r.v >= 2)) { msg("השרת שמר רק חלק מהנתונים: הקוד שלו (backend.gs) ישן. יש להדביק את הקוד העדכני ולפרסם גרסה חדשה (ראו הוראות), ואז לשמור שוב.", "err"); }
+        if (r && r.ok && !(r.v >= 4)) { msg("השרת שמר רק חלק מהנתונים: הקוד שלו (backend.gs) ישן. יש להדביק את הקוד העדכני ולפרסם גרסה חדשה (ראו הוראות), ואז לשמור שוב.", "err"); }
         else if (r && r.ok) { setDirty(false); msg("נשמר. האתר מתעדכן מיד אצל מי שפותח אותו מעכשיו (מי שכבר פתוח אצלו יראה בטעינה הבאה).", "ok"); }
         else if (r && (r.error === "bad_password" || r.error === "locked")) { dirty = false; forget(); showLogin(errText(r)); }
         else msg(errText(r), "err");

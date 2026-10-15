@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="color-scheme" content="only light">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>אור וערך לנעמה – דף קישורים</title>
-<meta name="description" content="אור וערך לנעמה – דף קישורים שבועי לפרשת השבוע ברוח אימון הנפש, לעילוי נשמת נעמה בת יעל">
+<title>אור וערך לנעמה</title>
+<meta name="description" content="אור וערך לנעמה – לעילוי נשמת נעמה בת יעל. סיפורה של נעמה, פרשות השבוע בראי ערכים ותובנות מעולם ה-NLP, מכתבים ויוזמות לעשות טוב">
 <meta name="theme-color" content="#392D7A">
 <meta property="og:title" content="אור וערך לנעמה">
 <meta property="og:description" content="דף קישורים שבועי לפרשת השבוע – לעילוי נשמת נעמה בת יעל">
@@ -21,7 +21,24 @@
 </head>
 <body>
 
-<div class="topbar"><div class="wrap"><button class="btn-info" id="btn-info" type="button">מידע על האתר</button><button class="btn-info" id="btn-writes" type="button"><span id="writes-title">כותבים לנעמה</span></button></div></div>
+<div class="topbar" id="topbar">
+  <div class="wrap bar">
+    <button class="pill menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu"><span class="burger" aria-hidden="true"></span>תפריט</button>
+    <span class="spacer"></span>
+    <a class="pill donate" id="btn-donate" href="#" target="_blank" rel="noopener">לתרומה</a>
+    <button class="pill" id="btn-contact" type="button">צור קשר</button>
+  </div>
+  <nav class="menu" id="menu" aria-label="תפריט ראשי">
+    <div class="menu-in"><ul>
+      <li><button type="button" data-act="story">סיפור נפילתה של נעמה ז״ל</button></li>
+      <li><button type="button" data-act="books">אור וערך לנעמה – פרשות השבוע</button></li>
+      <li><button type="button" data-act="news">הרצאות וכתבות – מספרים על נעמה</button></li>
+      <li><button type="button" data-act="writes">כותבים לנעמה</button></li>
+      <li><button type="button" data-act="gallery">גלריית תמונות</button></li>
+      <li><button type="button" data-act="info">מידע על האתר</button></li>
+    </ul></div>
+  </nav>
+</div>
 
 <header class="band">
   <div class="wrap hd">
@@ -34,19 +51,14 @@
 
 <main class="paper">
   <div class="wrap">
-    <nav class="banners" aria-label="תוכן נוסף">
-      <div id="news"></div>
-      <button class="banner" id="btn-gallery" type="button"><strong id="gallery-title">תמונות של נעמה ז״ל</strong><span id="gallery-sub">גלריה</span></button>
-      <button class="banner" id="btn-story" type="button"><strong id="story-title">סיפור נפילתה של נעמה ז״ל</strong><span id="story-sub"></span></button>
-    </nav>
-
     <div class="slides" id="slides" hidden></div>
     <div class="video" id="video" hidden></div>
 
-    <h2 class="links-heading">אור וערך מפרשת השבוע<br>בשילוב כלים מעולם ה-NLP</h2>
-
     <div id="loading" class="loading">טוען…</div>
-    <div class="books" id="books"></div>
+    <section class="home" id="home" hidden>
+      <h2 id="home-title"></h2>
+      <div id="home-text"></div>
+    </section>
 
     <footer class="foot">
       <p class="l1" id="foot-1"></p>
@@ -54,6 +66,33 @@
     </footer>
   </div>
 </main>
+
+<!-- פרשות (אור וערך לנעמה) -->
+<dialog class="modal" id="dlg-books" aria-labelledby="books-head">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="books-head">אור וערך לנעמה</h2><button class="close" type="button" data-close aria-label="סגירה">×</button></div>
+    <div class="modal-body pad">
+      <h2 class="links-heading">אור וערך מפרשת השבוע<br>בשילוב כלים מעולם ה-NLP</h2>
+      <div class="books" id="books"></div>
+    </div>
+  </div>
+</dialog>
+
+<!-- מספרים על נעמה: הרצאות וכתבות -->
+<dialog class="modal" id="dlg-news" aria-labelledby="news-head">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="news-head">מספרים על נעמה</h2><button class="close" type="button" data-close aria-label="סגירה">×</button></div>
+    <div class="modal-body pad"><ul class="list newslist" id="news-list"></ul></div>
+  </div>
+</dialog>
+
+<!-- הודעה קצרה (צור קשר ועוד) -->
+<dialog class="modal short" id="dlg-msg" aria-labelledby="msg-title">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="msg-title"></h2><button class="close" type="button" data-close aria-label="סגירה">×</button></div>
+    <div class="modal-body pad" id="msg-body"></div>
+  </div>
+</dialog>
 
 <!-- מידע על האתר -->
 <dialog class="modal short" id="dlg-info" aria-labelledby="info-head">

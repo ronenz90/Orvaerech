@@ -188,7 +188,6 @@
   }
   var compose = $("compose"), wMsg = $("w-msg");
   function wsay(t, err) { wMsg.textContent = t || ""; wMsg.className = "w-msg" + (err ? " err" : ""); wMsg.hidden = !t; }
-  $("btn-writes").addEventListener("click", function () { open($("dlg-writes")); $("dlg-writes").querySelector(".modal-body").scrollTop = 0; loadLetters(); });
   $("btn-compose").addEventListener("click", function () { compose.hidden = false; $("btn-compose").hidden = true; wsay(""); $("w-done").hidden = true; $("w-name").focus(); });
   $("w-cancel").addEventListener("click", function () { compose.hidden = true; $("btn-compose").hidden = false; wsay(""); });
   compose.addEventListener("submit", function (e) {
@@ -242,13 +241,20 @@
 
   function render(d) {
     SiteDefaults.fill(d);
-    /* banners */
-    $("gallery-title").textContent = d.gallery.title;
-    $("gallery-sub").textContent = d.gallery.subtitle || "";
+    site = d;
     $("gallery-head").textContent = d.gallery.title;
-    $("story-title").textContent = d.story.title;
-    $("story-sub").textContent = d.story.subtitle || "";
     $("story-head").textContent = d.story.title;
+
+    /* home text */
+    $("home-title").textContent = d.home.title;
+    var hb = $("home-text"); hb.textContent = "";
+    var hp = String(d.home.text || "").split(/\n{2,}/).map(function (t) { return t.trim(); }).filter(Boolean);
+    hp.forEach(function (t, i) { hb.appendChild(el("p", i === hp.length - 1 && hp.length > 1 ? "closing" : null, t)); });
+    $("home").hidden = !(d.home.title || hp.length);
+
+    /* top bar: donate + contact */
+    var don = $("btn-donate"), du = d.donate.url || "";
+    don.href = /^https?:\/\//i.test(du) ? du : "#";
 
     /* info */
     $("info-head").textContent = d.info.title || "מידע על האתר";
@@ -258,14 +264,6 @@
     /* gallery */
     var gal = d.gallery;
     galCfg.url = gal.url || ""; galCfg.feed = gal.feed || ""; startSlides(galCfg);
-    $("btn-gallery").onclick = function () { openGallery(gal); };
-
-    /* story: Drive link if set, otherwise built-in text */
-    $("btn-story").onclick = function () {
-      if (/^https?:\/\//i.test(d.story.url || "")) { openViewer(d.story.title, d.story.url); return; }
-      open($("dlg-story"));
-      $("dlg-story").querySelector(".modal-body").scrollTop = 0;
-    };
 
     /* books: one banner per book, unfolds into the parasha list */
     var box = $("books");
@@ -297,27 +295,23 @@
       box.appendChild(sec);
     });
 
-    /* news: "מספרים על נעמה" - opens in place, links go to the articles */
-    var nbox = $("news");
-    var nOpen = !!nbox.querySelector(".book.open");
-    nbox.textContent = "";
+    /* news: "מספרים על נעמה" - links to articles and lectures */
+    $("news-head").textContent = d.news.title;
+    var nl = $("news-list"); nl.textContent = "";
     var items = (d.news.items || []).filter(function (x) { return x.title || x.url; });
-    nbox.appendChild(makeBook(nbox, d.news.title, items.length ? items.length + " כתבות" : "", nOpen, function (ul) {
-      if (!items.length) { var e0 = el("li"); e0.appendChild(el("div", "li soon", "עדיין אין כתבות")); ul.appendChild(e0); return; }
-      items.forEach(function (x) {
-        var li = el("li");
-        var ok = /^https?:\/\//i.test(x.url || "");
-        var row = el(ok ? "a" : "div", "li art" + (ok ? "" : " soon"));
-        var t = el("span", "art-t", x.title || x.url);
-        if (x.source) t.appendChild(el("span", "art-s", x.source));
-        row.appendChild(t);
-        if (ok) { row.appendChild(el("span", "go", "\u2197")); row.href = x.url; row.target = "_blank"; row.rel = "noopener noreferrer"; }
-        li.appendChild(row); ul.appendChild(li);
-      });
-    }));
+    if (!items.length) { var e0 = el("li"); e0.appendChild(el("div", "li soon", "עדיין אין כתבות")); nl.appendChild(e0); }
+    items.forEach(function (x) {
+      var li = el("li");
+      var ok = /^https?:\/\//i.test(x.url || "");
+      var row = el(ok ? "a" : "div", "li art" + (ok ? "" : " soon"));
+      var t = el("span", "art-t", x.title || x.url);
+      if (x.source) t.appendChild(el("span", "art-s", x.source));
+      row.appendChild(t);
+      if (ok) { row.appendChild(el("span", "go", "\u2197")); row.href = x.url; row.target = "_blank"; row.rel = "noopener noreferrer"; }
+      li.appendChild(row); nl.appendChild(li);
+    });
 
     /* writes: "כותבים לנעמה" - letters: fixed ones from the data + public ones from the server */
-    $("writes-title").textContent = d.writes.title;
     $("writes-head").textContent = d.writes.title;
     wStatic = (d.writes.items || []).filter(function (x) { return x.name || x.text; });
     renderLetters();
@@ -345,7 +339,47 @@
     var ld = $("loading"); if (ld) ld.remove();
   }
 
-  $("btn-info").addEventListener("click", function () { open($("dlg-info")); });
+  /* ---------- top bar: menu, donate, contact ---------- */
+  var site = null;
+  var menu = $("menu"), menuBtn = $("menu-btn");
+  function setMenu(on) { menu.classList.toggle("open", on); menuBtn.setAttribute("aria-expanded", on ? "true" : "false"); }
+  menuBtn.addEventListener("click", function () { setMenu(!menu.classList.contains("open")); });
+  document.addEventListener("click", function (e) { if (!$("topbar").contains(e.target)) setMenu(false); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") setMenu(false); });
+  var acts = {
+    story: function () {
+      if (site && /^https?:\/\//i.test(site.story.url || "")) { openViewer(site.story.title, site.story.url); return; }
+      open($("dlg-story")); $("dlg-story").querySelector(".modal-body").scrollTop = 0;
+    },
+    books: function () { open($("dlg-books")); },
+    news: function () { open($("dlg-news")); },
+    writes: function () { open($("dlg-writes")); $("dlg-writes").querySelector(".modal-body").scrollTop = 0; loadLetters(); },
+    gallery: function () { if (site) openGallery(site.gallery); },
+    info: function () { open($("dlg-info")); }
+  };
+  menu.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-act]"); if (!b) return;
+    setMenu(false); acts[b.getAttribute("data-act")]();
+  });
+  function note(title, node) { $("msg-title").textContent = title; var b = $("msg-body"); b.textContent = ""; b.appendChild(node); open($("dlg-msg")); }
+  $("btn-donate").addEventListener("click", function (e) {
+    if (site && /^https?:\/\//i.test(site.donate.url || "")) return;
+    e.preventDefault(); note("לתרומה", el("p", "msg-p", "הקישור לתרומה יתווסף בקרוב."));
+  });
+  $("btn-contact").addEventListener("click", function () {
+    var mail = (site && site.contact.email) || "yaelbony21@gmail.com";
+    var box = el("div", "contact");
+    box.appendChild(el("p", "msg-p", "אפשר לכתוב אלינו:"));
+    var a = el("a", "mail", mail); a.href = "mailto:" + mail; a.dir = "ltr"; box.appendChild(a);
+    var cp = el("button", "btn-copy", "העתקת הכתובת"); cp.type = "button";
+    cp.addEventListener("click", function () {
+      var done = function () { cp.textContent = "הועתק ✓"; };
+      try { navigator.clipboard.writeText(mail).then(done, function () { selectText(a); }); } catch (e) { selectText(a); }
+    });
+    box.appendChild(cp);
+    note("צור קשר", box);
+  });
+  function selectText(n) { try { var r = document.createRange(); r.selectNodeContents(n); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} }
 
   /* ---------- data loading: server (Apps Script) first, repo file as fallback ---------- */
   var CKEY = "naama_site_v1", lastJson = null, failed = false;

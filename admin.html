@@ -43,10 +43,10 @@
   <p class="note" id="msg" role="status" hidden></p>
 
   <section class="card" id="sec-general">
-    <h2>באנרים ותוכן כללי</h2>
+    <h2>תוכן כללי</h2>
     <div class="grid2">
       <fieldset>
-        <legend>באנר גלריית תמונות</legend>
+        <legend>גלריית תמונות</legend>
         <label>כותרת<input data-bind="gallery.title"></label>
         <label>כותרת משנה<input data-bind="gallery.subtitle"></label>
         <label>קישור לתיקיית Google Drive <small>(לשימוש כשאין גלריה נגללת; חייבת להיות משותפת)</small>
@@ -55,11 +55,27 @@
           <input data-bind="gallery.feed" data-feed dir="ltr" placeholder="https://script.google.com/macros/s/…/exec"></label>
       </fieldset>
       <fieldset>
-        <legend>באנר סיפור הנפילה</legend>
+        <legend>סיפור הנפילה</legend>
         <label>כותרת<input data-bind="story.title"></label>
         <label>כותרת משנה<input data-bind="story.subtitle"></label>
         <label>קישור למסמך Drive <small>(אופציונלי. ריק = מוצג הסיפור המובנה באתר)</small>
           <input data-bind="story.url" data-url dir="ltr" placeholder="https://docs.google.com/document/d/…"></label>
+      </fieldset>
+    </div>
+    <fieldset>
+      <legend>עמוד הבית – טקסט פתיחה</legend>
+      <label>כותרת<input data-bind="home.title"></label>
+      <label>טקסט <small>(שורה ריקה = פסקה חדשה. הפסקה האחרונה מודגשת)</small><textarea rows="14" data-bind="home.text"></textarea></label>
+    </fieldset>
+    <div class="grid2">
+      <fieldset>
+        <legend>כפתור "לתרומה"</legend>
+        <label>קישור לתרומה <small>(ריק = יוצג "יתווסף בקרוב")</small>
+          <input data-bind="donate.url" dir="ltr" placeholder="https://…"></label>
+      </fieldset>
+      <fieldset>
+        <legend>כפתור "צור קשר"</legend>
+        <label>כתובת אימייל<input data-bind="contact.email" dir="ltr" placeholder="name@example.com"></label>
       </fieldset>
     </div>
     <fieldset>
@@ -81,7 +97,7 @@
 
   <section class="card" id="sec-writes">
     <h2>כותבים לנעמה – מכתבים</h2>
-    <label>שם הכפתור בראש הדף<input data-bind="writes.title"></label>
+    <label>כותרת החלון<input data-bind="writes.title"></label>
     <p class="hint">המכתבים מנוהלים כאן מיד מול השרת, בלי קשר ללחיצה על "שמירה" למעלה.</p>
     <label class="check"><input id="l-auto" type="checkbox"> פרסום אוטומטי של מכתבים חדשים (בלי אישור שלי)</label>
     <p class="note err" id="l-msg" hidden role="alert"></p>
@@ -92,8 +108,8 @@
   <section class="card" id="sec-news">
     <h2>מספרים על נעמה</h2>
     <div class="grid2">
-      <label>כותרת הבאנר<input data-bind="news.title"></label>
-      <label>כותרת משנה<input data-bind="news.subtitle"></label>
+      <label>כותרת החלון<input data-bind="news.title"></label>
+      <label>כותרת משנה (לא בשימוש)<input data-bind="news.subtitle"></label>
     </div>
     <div id="news-items" class="items"></div>
     <p><button class="btn" id="btn-add-news" type="button">+ הוספת כתבה</button></p>

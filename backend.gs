@@ -49,7 +49,7 @@ function doPost(e) {
     try { clean = sanitize_(req.data); }
     catch (err) { return out_({ ok: false, error: 'invalid_data', detail: String(err) }); }
     writeSite_(clean);
-    return out_({ ok: true, v: 3 });
+    return out_({ ok: true, v: 4 });
   }
   return out_({ ok: false, error: 'bad_request' });
 }
@@ -227,11 +227,17 @@ function list_(a, max, name, fn) {
   });
 }
 
+function email_(v) {
+  const s = str_(v, 120, 'contact.email').trim();
+  if (s && !/^[^\s@<>\"]+@[^\s@<>\"]+\.[^\s@<>\"]+$/.test(s)) throw 'contact.email invalid';
+  return s;
+}
+
 function sanitize_(d) {
   if (!d || typeof d !== 'object') throw 'no data';
   if (!Array.isArray(d.books) || d.books.length > 40) throw 'books';
   const g = d.gallery || {}, s = d.story || {}, i = d.info || {}, f = d.footer || {};
-  const w = d.writes || {}, n = d.news || {}, v = d.video || {};
+  const w = d.writes || {}, n = d.news || {}, v = d.video || {}, h = d.home || {}, dn = d.donate || {}, ct = d.contact || {};
   const clean = {
     version: 1,
     info: { title: str_(i.title, 100, 'info.title'), text: str_(i.text, 8000, 'info.text') },
@@ -249,6 +255,9 @@ function sanitize_(d) {
     }),
     footer: { line1: str_(f.line1, 300, 'footer.line1'), line2: str_(f.line2, 300, 'footer.line2') },
     video: { url: url_(v.url, 'video.url') },
+    home: { title: str_(h.title, 200, 'home.title'), text: str_(h.text, 10000, 'home.text') },
+    donate: { url: url_(dn.url, 'donate.url') },
+    contact: { email: email_(ct.email) },
     writes: {
       title: str_(w.title, 100, 'writes.title'), subtitle: str_(w.subtitle, 100, 'writes.subtitle'),
       items: list_(w.items, 500, 'writes', function (r) { return { name: str_(r.name, 100, 'writes.name'), text: str_(r.text, 6000, 'writes.text') }; })
