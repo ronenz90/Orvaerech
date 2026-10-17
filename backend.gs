@@ -12,6 +12,9 @@ var LETTERS_FILE_NAME = 'naama-letters.json';        // created in My Drive, hol
 var MAX_PENDING = 300;                               // letters waiting for approval
 var MAX_LETTERS = 1500;                              // all letters
 var SUBMITS_PER_HOUR = 40;                           // public submissions per hour (all visitors)
+var CONTACT_FILE_NAME = 'naama-contact.json';        // backup copy of every contact message
+var DEFAULT_CONTACT_TO = 'yaelbony21@gmail.com';     // used when no address is saved in the admin page
+var CONTACTS_PER_HOUR = 15;                          // contact messages per hour (all visitors)
 var LOCK_SECONDS = 900;                                // lockout duration (15 minutes)
 
 // ---- entry points ----
@@ -29,6 +32,7 @@ function doPost(e) {
   catch (err) { return out_({ ok: false, error: 'bad_request' }); }
 
   if (req && req.action === 'submit') return submit_(req);
+  if (req && req.action === 'contact') return contact_(req);
 
   const auth = checkPassword_(req.password);
   if (auth !== 'ok') return out_({ ok: false, error: auth });
@@ -202,6 +206,76 @@ function lettersOp_(req) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// ---- contact form: sends an e-mail to the site owner ----
+
+function contactTo_() {
+  const prop = PropertiesService.getScriptProperties().getProperty('CONTACT_TO');
+  if (prop) return prop;
+  const site = readSite_();
+  const m = site && site.contact && site.contact.email;
+  return m || DEFAULT_CONTACT_TO;
+}
+
+function logContact_(entry) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const props = PropertiesService.getScriptProperties();
+    let list = [];
+    let file = null;
+    const id = props.getProperty('CONTACT_FILE_ID');
+    if (id) {
+      try { file = DriveApp.getFileById(id); list = JSON.parse(file.getBlob().getDataAsString('UTF-8')); } catch (err) { file = null; list = []; }
+    }
+    if (!Array.isArray(list)) list = [];
+    list.push(entry);
+    if (list.length > 300) list = list.slice(list.length - 300);
+    const text = JSON.stringify(list);
+    if (file) file.setContent(text);
+    else props.setProperty('CONTACT_FILE_ID', DriveApp.createFile(CONTACT_FILE_NAME, text, 'text/plain').getId());
+  } catch (err) {
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function contact_(req) {
+  if (req.hp) return out_({ ok: true });
+  if (typeof req.text !== 'string') return out_({ ok: false, error: 'bad_request' });
+  const name = String(req.name == null ? '' : req.name).trim();
+  const mail = String(req.email == null ? '' : req.email).trim();
+  const text = req.text.trim();
+  if (text.length < 2) return out_({ ok: false, error: 'empty' });
+  if (text.length > 3000 || name.length > 80 || mail.length > 120) return out_({ ok: false, error: 'too_long' });
+  if (mail && !/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(mail)) return out_({ ok: false, error: 'bad_email' });
+  const cache = CacheService.getScriptCache();
+  const n = Number(cache.get('mails') || 0);
+  if (n >= CONTACTS_PER_HOUR) return out_({ ok: false, error: 'busy' });
+  cache.put('mails', String(n + 1), 3600);
+
+  logContact_({ ts: new Date().toISOString(), name: name, email: mail, text: text });
+  const body = [
+    '\u05e9\u05dd' + ': ' + (name || '\u05dc\u05d0 \u05e6\u05d5\u05d9\u05df'),
+    '\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05dc\u05d4\u05e9\u05d1\u05d4' + ': ' + (mail || '\u05dc\u05d0 \u05e6\u05d5\u05d9\u05df'),
+    '',
+    '\u05d4\u05d4\u05d5\u05d3\u05e2\u05d4' + ':',
+    text,
+    '',
+    '--',
+    '\u05d0\u05e4\u05e9\u05e8 \u05dc\u05d4\u05e9\u05d9\u05d1 \u05d9\u05e9\u05d9\u05e8\u05d5\u05ea \u05dc\u05d4\u05d5\u05d3\u05e2\u05d4 \u05d4\u05d6\u05d0\u05ea \u05d0\u05dd \u05d4\u05db\u05d5\u05ea\u05d1 \u05d4\u05e9\u05d0\u05d9\u05e8 \u05d0\u05d9\u05de\u05d9\u05d9\u05dc.'
+  ].join('\n');
+  const opts = { to: contactTo_(), subject: '\u05d4\u05d5\u05d3\u05e2\u05d4 \u05d7\u05d3\u05e9\u05d4 \u05de\u05d0\u05ea\u05e8 \u05d0\u05d5\u05e8 \u05d5\u05e2\u05e8\u05da \u05dc\u05e0\u05e2\u05de\u05d4', body: body };
+  if (mail) opts.replyTo = mail;
+  let mailed = true;
+  try { MailApp.sendEmail(opts); } catch (err) { mailed = false; }
+  return out_({ ok: true, mailed: mailed });
+}
+
+// Run this function once from the editor (Run button) to approve sending e-mail.
+function authorizeMail() {
+  MailApp.sendEmail(contactTo_(), '\u05d1\u05d3\u05d9\u05e7\u05d4: \u05e9\u05dc\u05d9\u05d7\u05ea \u05de\u05d9\u05d9\u05dc \u05de\u05d0\u05ea\u05e8 \u05d0\u05d5\u05e8 \u05d5\u05e2\u05e8\u05da \u05dc\u05e0\u05e2\u05de\u05d4', '\u05d0\u05dd \u05e7\u05d9\u05d1\u05dc\u05ea\u05dd \u05d0\u05ea \u05d4\u05d4\u05d5\u05d3\u05e2\u05d4 \u05d4\u05d6\u05d0\u05ea, \u05e9\u05dc\u05d9\u05d7\u05ea \u05d4\u05de\u05d9\u05d9\u05dc\u05d9\u05dd \u05de\u05d4\u05d0\u05ea\u05e8 \u05de\u05d0\u05d5\u05e9\u05e8\u05ea \u05d5\u05e4\u05d5\u05e2\u05dc\u05ea.');
 }
 
 // ---- validation - only known fields are stored ----

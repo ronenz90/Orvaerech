@@ -366,19 +366,40 @@
     if (site && /^https?:\/\//i.test(site.donate.url || "")) return;
     e.preventDefault(); note("לתרומה", el("p", "msg-p", "הקישור לתרומה יתווסף בקרוב."));
   });
-  $("btn-contact").addEventListener("click", function () {
-    var mail = (site && site.contact.email) || "yaelbony21@gmail.com";
-    var box = el("div", "contact");
-    box.appendChild(el("p", "msg-p", "אפשר לכתוב אלינו:"));
-    var a = el("a", "mail", mail); a.href = "mailto:" + mail; a.dir = "ltr"; box.appendChild(a);
-    var cp = el("button", "btn-copy", "העתקת הכתובת"); cp.type = "button";
-    cp.addEventListener("click", function () {
-      var done = function () { cp.textContent = "הועתק ✓"; };
-      try { navigator.clipboard.writeText(mail).then(done, function () { selectText(a); }); } catch (e) { selectText(a); }
+  $("btn-contact").addEventListener("click", function () { note("צור קשר", contactForm()); });
+  function contactForm() {
+    var api = window.SITE_API;
+    var form = el("form", "compose");
+    function field(label, id, node) { var l = el("label", null, label); l.setAttribute("for", id); node.id = id; form.appendChild(l); form.appendChild(node); return node; }
+    var name = field("השם שלכם (לא חובה)", "c-name", el("input")); name.maxLength = 80; name.autocomplete = "name";
+    var mail = field("אימייל להשבה (לא חובה)", "c-mail", el("input")); mail.type = "email"; mail.maxLength = 120; mail.dir = "ltr"; mail.autocomplete = "email"; mail.inputMode = "email";
+    var text = field("ההודעה", "c-text", el("textarea")); text.rows = 6; text.maxLength = 3000; text.required = true;
+    var hp = el("input", "hp"); hp.tabIndex = -1; hp.autocomplete = "off"; hp.setAttribute("aria-hidden", "true"); form.appendChild(hp);
+    var msg = el("p", "w-msg err"); msg.hidden = true; msg.setAttribute("role", "status"); form.appendChild(msg);
+    var send = el("button", "btn-send", "שליחה"); send.type = "submit";
+    var row = el("div", "compose-actions"); row.appendChild(send); form.appendChild(row);
+    function fail(t) {
+      var addr = (site && site.contact.email) || "yaelbony21@gmail.com";
+      msg.textContent = t + " אפשר גם לכתוב ישירות אל " + addr + "."; msg.hidden = false;
+    }
+    form.addEventListener("submit", function (e) {
+      e.preventDefault(); msg.hidden = true;
+      if (!text.value.trim()) { msg.textContent = "יש לכתוב הודעה."; msg.hidden = false; return; }
+      if (!api) { fail("לא ניתן לשלוח כרגע."); return; }
+      send.disabled = true; send.textContent = "שולח…";
+      fetch(api, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "contact", name: name.value.trim(), email: mail.value.trim(), text: text.value, hp: hp.value }) })
+        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          if (r && r.ok) { note("צור קשר", el("p", "msg-p", "תודה! ההודעה נשלחה. נחזור אליכם בהקדם.")); return; }
+          var m = { bad_email: "כתובת האימייל אינה תקינה.", too_long: "ההודעה ארוכה מדי.", busy: "נשלחו יותר מדי הודעות כרגע.", empty: "יש לכתוב הודעה." };
+          fail(m[r && r.error] || "השליחה נכשלה.");
+        })
+        .catch(function () { fail("השליחה נכשלה. בדקו את החיבור."); })
+        .then(function () { send.disabled = false; send.textContent = "שליחה"; });
     });
-    box.appendChild(cp);
-    note("צור קשר", box);
-  });
+    return form;
+  }
   function selectText(n) { try { var r = document.createRange(); r.selectNodeContents(n); var s = getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) {} }
 
   /* ---------- data loading: server (Apps Script) first, repo file as fallback ---------- */
